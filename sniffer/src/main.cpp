@@ -1,24 +1,30 @@
 #include <iostream>
-#include <pcap.h>
+#include "stdlib.h"
+#include "PcapLiveDeviceList.h"
+#include "SystemUtils.h"
+#include <vector>
 
-using namespace std;
-
-int main(int argc, char *argv[])
+/**
+* main method of the application
+*/
+int main(int argc, char* argv[])
 {
-	char *dev, errbuf[PCAP_ERRBUF_SIZE];
 
-	dev = pcap_lookupdev(errbuf);
-	if (dev == NULL) {
-        cout << "Couldn't find default device: " << errbuf << endl;
-		return(2);
-	}
-    cout << "Device: " << dev << endl;
+	std::vector<pcpp::PcapLiveDevice*> allDevs = pcpp::PcapLiveDeviceList::getInstance().getPcapLiveDevicesList();
 
-	pcap_t *handle;
-	handle = pcap_open_live(dev, BUFSIZ, 1, 1000, errbuf);
-	if (handle == NULL){
-		cout << "Couldn't open device " << dev << ": " << errbuf << endl;
-		return(2);
-	}
-	return(0);
+	std::for_each(allDevs.begin(), allDevs.end(), [](pcpp::PcapLiveDevice* dev) {
+	std::cout
+    << "Interface info:" << std::endl
+    << "   Interface name:        " << dev->getName() << std::endl // get interface name
+    << "   Interface description: " << dev->getDesc() << std::endl // get interface description
+    << "   MAC address:           " << dev->getMacAddress() << std::endl // get interface MAC address
+    << "   Default gateway:       " << dev->getDefaultGateway() << std::endl // get default gateway
+    << "   Interface MTU:         " << dev->getMtu() << std::endl; // get interface MTU
+
+	if (dev->getDnsServers().size() > 0)
+		std::cout << "   DNS server:            " << dev->getDnsServers().at(0) << std::endl;
+		std::cout << "   IPv4 ADDR:             " << dev->getIPv4Address().toString() << std::endl;
+	});
+
+	return 0;
 }
