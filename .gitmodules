@@ -1,3 +1,6 @@
 [submodule "PcapPlusPlus"]
 	path = PcapPlusPlus
 	url = https://github.com/seladb/PcapPlusPlus.git
+[submodule "SQLiteCpp"]
+	path = SQLiteCpp
+	url = https://github.com/SRombauts/SQLiteCpp.git
