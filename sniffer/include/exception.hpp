@@ -1,3 +1,6 @@
+#ifndef _EXCEPTION_HPP
+#define _EXCEPTION_HPP
+
 #include <exception>
 #include "Logger.h"
 #include <string>
@@ -36,3 +39,5 @@ namespace sniffer{
     };
 
 }
+
+#endif
