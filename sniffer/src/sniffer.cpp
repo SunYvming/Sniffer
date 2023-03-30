@@ -19,7 +19,12 @@ static void onPacketArrives(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, 
 {
     DataManager* dm = (DataManager*)cookie;
     pcpp::Packet parsedPacket(packet);
-    dm->consumePacket(parsedPacket);
+    try{
+        dm->consumePacket(parsedPacket);
+    }
+    catch (std::exception& e){
+        std::cerr << e.what() << '\n';
+    }
 }
 
 void Sniffer::startCapture(int timeout)
@@ -41,5 +46,10 @@ void Sniffer::stopCapture()
 {
     this->dev->stopCapture();
     std::cout << this->dev->getName() << std::endl;
+    this->dm->printToConsole();
+}
+
+void Sniffer::printLog()
+{
     this->dm->printToConsole();
 }

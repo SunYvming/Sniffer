@@ -42,6 +42,7 @@ class Sniffer
 
         void startCapture(int timeout = 0);
         void stopCapture();
+        void printLog();
 
         void printInfo()
         {

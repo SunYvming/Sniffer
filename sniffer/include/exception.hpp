@@ -24,4 +24,15 @@ namespace sniffer{
             std::string m_msg;
     };
 
+    class WithoutLayer : public std::exception
+    {
+        public:
+            WithoutLayer(const char* msg) : m_msg(msg) {}
+            virtual const char* what() const throw() { 
+                return m_msg.c_str();
+            }
+        private:
+            std::string m_msg;
+    };
+
 }

@@ -3,51 +3,41 @@
 
 #include "PcapLiveDevice.h"
 #include <iostream>
+#include <vector>
+
+#include "SQLiteCpp/SQLiteCpp.h"
 class DataManager
 {
     public:
-        void consumePacket(pcpp::Packet& packet)
-        {
-            if (packet.isPacketOfType(pcpp::Ethernet))
-                ethPacketCount++;
-            if (packet.isPacketOfType(pcpp::IPv4))
-                ipv4PacketCount++;
-            if (packet.isPacketOfType(pcpp::IPv6))
-                ipv6PacketCount++;
-            if (packet.isPacketOfType(pcpp::TCP))
-                tcpPacketCount++;
-            if (packet.isPacketOfType(pcpp::UDP))
-                udpPacketCount++;
-            if (packet.isPacketOfType(pcpp::DNS))
-                dnsPacketCount++;
-            if (packet.isPacketOfType(pcpp::HTTP))
-                httpPacketCount++;
-            if (packet.isPacketOfType(pcpp::SSL))
-                sslPacketCount++;
-        }
+        typedef struct{
+            std::string srcMac;
+            std::string dstMac;
+            std::string dlType;
+
+            std::string srcIp;
+            std::string dstIp;
+            std::string nwType;
+
+            uint16_t srcPort;
+            uint16_t dstPort;
+            std::string tpType;
+        }log_t;
+        void consumePacket(pcpp::Packet& packet);
+
+        void insertLog();
 
         void printToConsole()
         {
-            std::cout
-                << "Ethernet packet count: " << ethPacketCount << std::endl
-                << "IPv4 packet count:     " << ipv4PacketCount << std::endl
-                << "IPv6 packet count:     " << ipv6PacketCount << std::endl
-                << "TCP packet count:      " << tcpPacketCount << std::endl
-                << "UDP packet count:      " << udpPacketCount << std::endl
-                << "DNS packet count:      " << dnsPacketCount << std::endl
-                << "HTTP packet count:     " << httpPacketCount << std::endl
-                << "SSL packet count:      " << sslPacketCount << std::endl;
+            std::for_each(logs.begin(), logs.end(), [](log_t log){
+                std::cout << log.dlType << "->" << log.nwType << "->" << log.tpType << std::endl;
+                std::cout << "From" << log.srcIp << ":"<<log.srcPort << "(" << log.srcMac<< ")" << " to " << log.dstIp << ":" << log.dstPort<< "(" << log.srcMac<< ")" << std::endl;
+                std::cout << "---------------------------------" << std::endl;
+            });
         }
 
     private:
-        int ethPacketCount;
-        int ipv4PacketCount;
-        int ipv6PacketCount;
-        int tcpPacketCount;
-        int udpPacketCount;
-        int dnsPacketCount;
-        int httpPacketCount;
-        int sslPacketCount;
+        static SQLite::Database* db;
+        std::vector<log_t> logs;
 
 };
 
