@@ -2,6 +2,7 @@
 
 #include <string>
 #include <iostream>
+#include "boost/algorithm/hex.hpp"
 
 #include "Packet.h"
 #include "Layer.h"
@@ -12,6 +13,8 @@
 
 #include "TcpLayer.h"
 #include "UdpLayer.h"
+
+#include "HttpLayer.h"
 
 #include "exception.hpp"
 
@@ -72,6 +75,17 @@ std::string getTransportLayerType(pcpp::ProtocolType protocolType)
     }
 }
 
+std::string getApplicationLayerType(pcpp::ProtocolType protocolType)
+{
+    switch(protocolType)
+    {
+    case pcpp::HTTP:
+        return "HTTP";
+    default:
+        return "Unknown";
+    }
+}
+
 void  DataLinkLayer::parse(pcpp::Packet &packet){
     uint64_t dlType = this->getType();
     // Ethernet 协议
@@ -94,7 +108,8 @@ void DataLinkLayer::printLayer()
     if(getDataLinkLayerType(this->getType()) == "Ethernet")
         std::cout << "SRC Mac: " << srcMac << "DST Mac: "<< dstMac <<std::endl;
     std::cout << "Layer data len:" << this->getDataLen() << std::endl;
-    std::cout << "--------------------------------" << std::endl;
+    std::cout << "Payload data len:" << this->getPayloadLen() << std::endl;
+    std::cout << "================================" << std::endl;
 }
 
 void NetworkLayer::parse(pcpp::Packet &packet)
@@ -138,7 +153,31 @@ void NetworkLayer::printLayer()
     else if(getNetworkLayerType(this->getType()) == "IPv6")
         std::cout << "SRC IP: " << srcIp << "DST IP: "<< dstIp <<std::endl;
     std::cout << "Layer data len:" << this->getDataLen() << std::endl;
-    std::cout << "--------------------------------" << std::endl;
+    std::cout << "Payload data len:" << this->getPayloadLen() << std::endl;
+    std::cout << "================================" << std::endl;
+}
+
+std::string getTcpFlags(pcpp::TcpLayer* tcpLayer)
+{
+    std::string result = "";
+    if (tcpLayer->getTcpHeader()->synFlag == 1)
+        result += "SYN ";
+    if (tcpLayer->getTcpHeader()->ackFlag == 1)
+        result += "ACK ";
+    if (tcpLayer->getTcpHeader()->pshFlag == 1)
+        result += "PSH ";
+    if (tcpLayer->getTcpHeader()->cwrFlag == 1)
+        result += "CWR ";
+    if (tcpLayer->getTcpHeader()->urgFlag == 1)
+        result += "URG ";
+    if (tcpLayer->getTcpHeader()->eceFlag == 1)
+        result += "ECE ";
+    if (tcpLayer->getTcpHeader()->rstFlag == 1)
+        result += "RST ";
+    if (tcpLayer->getTcpHeader()->finFlag == 1)
+        result += "FIN ";
+
+    return result;
 }
 
 void TransportLayer::parse(pcpp::Packet &packet)
@@ -155,6 +194,17 @@ void TransportLayer::parse(pcpp::Packet &packet)
         }
         srcPort = tcpLayer->getTcpHeader()->portSrc;
         dstPort = tcpLayer->getTcpHeader()->portDst;
+        windowSize = tcpLayer->getTcpHeader()->windowSize;
+        sequenceNumber = tcpLayer->getTcpHeader()->sequenceNumber;
+        ackNumber = tcpLayer->getTcpHeader()->ackNumber;
+        tcpFlags = getTcpFlags(tcpLayer);
+
+        //解码tcp options
+        for (pcpp::TcpOption tcpOption = tcpLayer->getFirstTcpOption(); tcpOption.isNotNull(); tcpOption = tcpLayer->getNextTcpOption(tcpOption))
+        {
+            pcpp::TcpOption* newOption = new pcpp::TcpOption(tcpOption);
+            tcpOptions.push_back(newOption);
+        }
     }
     // UDP 协议
     else if(tpType == pcpp::UDP)
@@ -174,13 +224,275 @@ void TransportLayer::parse(pcpp::Packet &packet)
     }
 }
 
+std::string printTcpOptionType(pcpp::TcpOptionType optionType)
+{
+    switch (optionType)
+    {
+    case pcpp::TcpOptionType::PCPP_TCPOPT_NOP:
+        return "NOP";
+    case pcpp::TcpOptionType::PCPP_TCPOPT_EOL:
+        return "EOL";
+    case pcpp::TcpOptionType::TCPOPT_MSS:
+        return "MSS";
+    case pcpp::TcpOptionType::PCPP_TCPOPT_WINDOW:
+        return "Window scaling";
+    case pcpp::TcpOptionType::TCPOPT_SACK_PERM:
+        return "SACK Permitted";
+    case pcpp::TcpOptionType::TCPOPT_ECHO:
+        return "Echo";
+    case pcpp::TcpOptionType::TCPOPT_ECHOREPLY:
+        return "Echo Reply";
+    case pcpp::TcpOptionType::PCPP_TCPOPT_TIMESTAMP:
+        return "Timestamp";
+    case pcpp::TcpOptionType::TCPOPT_CC:
+        return "CC";
+    case pcpp::TcpOptionType::TCPOPT_CCNEW:
+        return "CC.NEW";
+    case pcpp::TcpOptionType::TCPOPT_CCECHO:
+        return "CC.ECHO";
+    case pcpp::TcpOptionType::TCPOPT_MD5:
+        return "MD5 Signature Option";
+    case pcpp::TcpOptionType::TCPOPT_MPTCP:
+        return "Multipath TCP";
+    case pcpp::TcpOptionType::TCPOPT_SCPS:
+        return "SCPS Capabilities";
+    case pcpp::TcpOptionType::TCPOPT_SNACK:
+        return "SCPS SNACK";
+    case pcpp::TcpOptionType::TCPOPT_RECBOUND:
+        return "SCPS Record Boundary";
+    case pcpp::TcpOptionType::TCPOPT_CORREXP:
+        return "SCPS Corruption Experienced";
+    case pcpp::TcpOptionType::TCPOPT_QS:
+        return "Quick-Start Response";
+    case pcpp::TcpOptionType::TCPOPT_USER_TO:
+        return "User Timeout Option";
+    case pcpp::TcpOptionType::TCPOPT_EXP_FD:
+        return "RFC3692-style Experiment 1";
+    case pcpp::TcpOptionType::TCPOPT_EXP_FE:
+        return "RFC3692-style Experiment 2";
+    case pcpp::TcpOptionType::TCPOPT_RVBD_PROBE:
+        return "Riverbed probe option";
+    case pcpp::TcpOptionType::TCPOPT_RVBD_TRPY:
+        return "Riverbed transparency option";
+    case pcpp::TcpOptionType::TCPOPT_Unknown:
+        return "Unknown option";
+    default:
+        return "Unknown option";
+    }
+}
+
+std::string printTcpOptions(std::vector<pcpp::TcpOption*> tcpOptions){
+    std::string res = "";
+    std::for_each(tcpOptions.begin(), tcpOptions.end(), [&](pcpp::TcpOption* tcpOption){
+        res += "[";
+        res += printTcpOptionType(tcpOption->getTcpOptionType());
+        res += ":";
+        uint8_t* value = tcpOption->getValue();
+        if(tcpOption->getTcpOptionType() == pcpp::PCPP_TCPOPT_TIMESTAMP)
+        {
+            uint32_t timestamp = tcpOption->getValueAs<uint32_t>();
+            uint32_t timestamp_echo = tcpOption->getValueAs<uint32_t>(4);
+            res += std::to_string(timestamp);
+            res += ",";
+            res += std::to_string(timestamp_echo);
+        }
+        else if(value == NULL)
+        {
+            res += "NULL";
+        }
+        else{
+            std::string str(boost::algorithm::hex(std::string(reinterpret_cast<const char*>(value), tcpOption->getDataSize())));
+            res += str;
+        }
+        // res += tcpOption->getValueAs<std::string>();
+        res += "] ";
+    });
+    return res;
+}
+
 void TransportLayer::printLayer()
 {
     std::cout << "TransportLayer: " << getTransportLayerType(this->getType()) << std::endl;
     if(getTransportLayerType(this->getType()) == "TCP")
+    {
         std::cout << "SRC Port: " << srcPort << "DST Port: "<< dstPort <<std::endl;
+        std::cout << "Sequence Number: " << sequenceNumber << "Ack Number: "<< ackNumber <<std::endl;
+        std::cout << "TCP Flags: " << tcpFlags <<std::endl;
+        std::cout << "Window Size: " << windowSize <<std::endl;
+        std::cout << "TCP Options: " << printTcpOptions(this->tcpOptions) <<std::endl;
+    }
     else if(getTransportLayerType(this->getType()) == "UDP")
         std::cout << "SRC Port: " << srcPort << "DST Port: "<< dstPort <<std::endl;
     std::cout << "Layer data len:" << this->getDataLen() << std::endl;
+    std::cout << "Payload data len:" << this->getPayloadLen() << std::endl;
+    std::cout << "================================" << std::endl;
+}
+
+std::string printHttpMethod(pcpp::HttpRequestLayer::HttpMethod httpMethod)
+{
+    switch (httpMethod)
+    {
+    case pcpp::HttpRequestLayer::HttpGET:
+        return "GET";
+    case pcpp::HttpRequestLayer::HttpPOST:
+        return "POST";
+    default:
+        return "Other";
+    }
+}
+
+ApplicationLayer::appLayer_t* ApplicationLayer::parse(pcpp::Packet &packet , Layer *layer){
+    if (layer->getType() == pcpp::HTTPRequest){
+        pcpp::HttpRequestLayer* httpRequestLayer = packet.getLayerOfType<pcpp::HttpRequestLayer>();
+        if (httpRequestLayer == NULL)
+        {
+            throw sniffer::WithoutLayer("应用层类型为HTTP请求层，但未能解析HTTP请求层");
+        }
+
+        ApplicationLayer::appLayer_t* appLayer = new ApplicationLayer::appLayer_t();
+        appLayer->layer = layer;
+        ApplicationLayer::httpData_t* data = new ApplicationLayer::httpData_t();
+
+        data->method = printHttpMethod(httpRequestLayer->getFirstLine()->getMethod());
+        data->uri = httpRequestLayer->getFirstLine()->getUri();
+        data->version = httpRequestLayer->getFirstLine()->getVersion();
+        data->url = httpRequestLayer->getUrl();
+
+        data->host = httpRequestLayer->getFieldByName(PCPP_HTTP_HOST_FIELD)->getFieldValue();
+        data->connection = httpRequestLayer->getFieldByName(PCPP_HTTP_CONNECTION_FIELD)->getFieldValue();
+        data->userAgent = httpRequestLayer->getFieldByName(PCPP_HTTP_USER_AGENT_FIELD)->getFieldValue();
+        data->referer = httpRequestLayer->getFieldByName(PCPP_HTTP_REFERER_FIELD)->getFieldValue();
+        data->accept = httpRequestLayer->getFieldByName(PCPP_HTTP_ACCEPT_FIELD)->getFieldValue();
+        data->acceptLanguage = httpRequestLayer->getFieldByName(PCPP_HTTP_ACCEPT_LANGUAGE_FIELD)->getFieldValue();
+        data->acceptEncoding = httpRequestLayer->getFieldByName(PCPP_HTTP_ACCEPT_ENCODING_FIELD)->getFieldValue();
+        data->cookie = httpRequestLayer->getFieldByName(PCPP_HTTP_COOKIE_FIELD)->getFieldValue();
+        data->contentLen = httpRequestLayer->getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD)->getFieldValue();
+        data->contentType = httpRequestLayer->getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue();
+        data->contentEncoding = httpRequestLayer->getFieldByName(PCPP_HTTP_CONTENT_ENCODING_FIELD)->getFieldValue();
+        data->transferEncoding = httpRequestLayer->getFieldByName(PCPP_HTTP_TRANSFER_ENCODING_FIELD)->getFieldValue();
+        data->server = httpRequestLayer->getFieldByName(PCPP_HTTP_SERVER_FIELD)->getFieldValue();
+
+        appLayer->data = data;
+
+        return appLayer;
+    }
+    else if(layer->getType() == pcpp::HTTPResponse){
+        pcpp::HttpResponseLayer* httpResponseLayer = packet.getLayerOfType<pcpp::HttpResponseLayer>();
+        if (httpResponseLayer == NULL)
+        {
+            throw sniffer::WithoutLayer("应用层类型为HTTP响应层，但未能解析HTTP响应层");
+        }
+
+        ApplicationLayer::appLayer_t* appLayer = new ApplicationLayer::appLayer_t();
+        appLayer->layer = layer;
+        ApplicationLayer::httpData_t* data = new ApplicationLayer::httpData_t();
+
+        data->version = httpResponseLayer->getFirstLine()->getVersion();
+        data->stateCode = httpResponseLayer->getFirstLine()->getStatusCodeAsInt();
+        data->stateMsg = httpResponseLayer->getFirstLine()->getStatusCodeString();
+
+        data->host = httpResponseLayer->getFieldByName(PCPP_HTTP_HOST_FIELD)->getFieldValue();
+        data->connection = httpResponseLayer->getFieldByName(PCPP_HTTP_CONNECTION_FIELD)->getFieldValue();
+        data->userAgent = httpResponseLayer->getFieldByName(PCPP_HTTP_USER_AGENT_FIELD)->getFieldValue();
+        data->referer = httpResponseLayer->getFieldByName(PCPP_HTTP_REFERER_FIELD)->getFieldValue();
+        data->accept = httpResponseLayer->getFieldByName(PCPP_HTTP_ACCEPT_FIELD)->getFieldValue();
+        data->acceptLanguage = httpResponseLayer->getFieldByName(PCPP_HTTP_ACCEPT_LANGUAGE_FIELD)->getFieldValue();
+        data->acceptEncoding = httpResponseLayer->getFieldByName(PCPP_HTTP_ACCEPT_ENCODING_FIELD)->getFieldValue();
+        data->cookie = httpResponseLayer->getFieldByName(PCPP_HTTP_COOKIE_FIELD)->getFieldValue();
+        data->contentLen = httpResponseLayer->getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD)->getFieldValue();
+        data->contentType = httpResponseLayer->getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue();
+        data->contentEncoding = httpResponseLayer->getFieldByName(PCPP_HTTP_CONTENT_ENCODING_FIELD)->getFieldValue();
+        data->transferEncoding = httpResponseLayer->getFieldByName(PCPP_HTTP_TRANSFER_ENCODING_FIELD)->getFieldValue();
+        data->server = httpResponseLayer->getFieldByName(PCPP_HTTP_SERVER_FIELD)->getFieldValue();
+
+        appLayer->data = data;
+
+        return appLayer;
+    }
+    else{
+        ApplicationLayer::appLayer_t* appLayer = new ApplicationLayer::appLayer_t();
+        appLayer->layer = layer;
+        appLayer->data = nullptr;
+        return appLayer;
+    }
+    
+    return nullptr;
+}
+
+void printSubLayer(ApplicationLayer::appLayer_t* appLayer){
+    if(appLayer->layer->getType()==pcpp::HTTPRequest){
+        std::cout << "HTTP Request Layer" << std::endl;
+        if(appLayer->data != nullptr){
+            ApplicationLayer::httpData_t* data = (ApplicationLayer::httpData_t*)appLayer->data;
+            std::cout << "HTTP Method: " << data->method << std::endl;
+            std::cout << "HTTP Server: " << data->server << std::endl;
+            std::cout << "HTTP URI: " << data->uri << std::endl;
+            std::cout << "HTTP Version: " << data->version << std::endl;
+            std::cout << "HTTP URL: " << data->url << std::endl;
+            std::cout << "HTTP Host: " << data->host << std::endl;
+            std::cout << "HTTP Connection: " << data->connection << std::endl;
+            std::cout << "HTTP User-Agent: " << data->userAgent << std::endl;
+            std::cout << "HTTP Referer: " << data->referer << std::endl;
+            std::cout << "HTTP Accept: " << data->accept << std::endl;
+            std::cout << "HTTP Accept-Language: " << data->acceptLanguage << std::endl;
+            std::cout << "HTTP Accept-Encoding: " << data->acceptEncoding << std::endl;
+            std::cout << "HTTP Cookie: " << data->cookie << std::endl;
+            std::cout << "HTTP Content-Length: " << data->contentLen << std::endl;
+            std::cout << "HTTP Content-Type: " << data->contentType << std::endl;
+            std::cout << "HTTP Content-Encoding: " << data->contentEncoding << std::endl;
+            std::cout << "HTTP Transfer-Encoding: " << data->transferEncoding << std::endl;   
+        }
+    }
+    else if(appLayer->layer->getType()==pcpp::HTTPResponse){
+        std::cout << "HTTP Response Layer" << std::endl;
+        if(appLayer->data != nullptr){
+            ApplicationLayer::httpData_t* data = (ApplicationLayer::httpData_t*)appLayer->data;
+            std::cout << "HTTP Version: " << data->version << std::endl;
+            std::cout << "HTTP State Code: " << data->stateCode << std::endl;
+            std::cout << "HTTP State Msg: " << data->stateMsg << std::endl;
+            std::cout << "HTTP Host: " << data->host << std::endl;
+            std::cout << "HTTP Connection: " << data->connection << std::endl;
+            std::cout << "HTTP User-Agent: " << data->userAgent << std::endl;
+            std::cout << "HTTP Referer: " << data->referer << std::endl;
+            std::cout << "HTTP Accept: " << data->accept << std::endl;
+            std::cout << "HTTP Accept-Language: " << data->acceptLanguage << std::endl;
+            std::cout << "HTTP Accept-Encoding: " << data->acceptEncoding << std::endl;
+            std::cout << "HTTP Cookie: " << data->cookie << std::endl;
+            std::cout << "HTTP Content-Length: " << data->contentLen << std::endl;
+            std::cout << "HTTP Content-Type: " << data->contentType << std::endl;
+            std::cout << "HTTP Content-Encoding: " << data->contentEncoding << std::endl;
+            std::cout << "HTTP Transfer-Encoding: " << data->transferEncoding << std::endl;
+            std::cout << "HTTP Server: " << data->server << std::endl;
+        }
+    }
+    else if(appLayer->layer->getType()==pcpp::HTTP){
+        std::cout << "HTTP Layer" << std::endl;
+    }
+    else if(appLayer->layer->getType()==pcpp::SSL){
+        std::cout << "SSL Layer" << std::endl;
+    }
+    else if(appLayer->layer->getType()==pcpp::DNS){
+        std::cout << "DNS Layer" << std::endl;
+    }
+    else if(appLayer->layer->getType()==pcpp::SSH){
+        std::cout << "SSH Layer" << std::endl;
+    }
+    else if(appLayer->layer->getType()==pcpp::FTP){
+        std::cout << "FTP Layer" << std::endl;
+    }
+    else if(appLayer->layer->getType()==pcpp::GenericPayload){
+        std::cout << "Generic Payload Layer" << std::endl;
+    }
+    else{
+        std::cout << "Other Layer" << std::endl;
+    }
+    std::cout << "Layer data len:" << appLayer->layer->getDataLen() << std::endl;
+    std::cout << "Payload data len:" << appLayer->layer->getPayloadLen() << std::endl;
     std::cout << "--------------------------------" << std::endl;
+}
+
+void ApplicationLayer::printLayer()
+{
+    std::for_each(this->appLayers.begin(), this->appLayers.end(), printSubLayer);
+    std::cout << "================================" << std::endl;
 }

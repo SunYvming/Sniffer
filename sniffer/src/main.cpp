@@ -20,28 +20,32 @@ int main(int argc, char* argv[])
 			sniffers.push_back(Sniffer(dev));
 	});
 
-   
+   // 仅单线程测试
+    sniffers[0].printInfo();
+    sniffers[0].startCapture();
+    pcpp::multiPlatformSleep(5);
+    sniffers[0].stopCapture();
 
 
-	std::for_each(sniffers.begin(), sniffers.end(), [&sniffers](Sniffer &sniffer) {
-		try
-		{
-			sniffer.printInfo();
-			sniffer.startCapture();
-		}
-		catch(const std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			std::remove(sniffers.begin(), sniffers.end(), sniffer);
-		}
-	});
-	// 定时捕获测试
-	pcpp::multiPlatformSleep(5);
-	std::for_each(sniffers.begin(), sniffers.end(), [](Sniffer &sniffer) {
-		sniffer.stopCapture();
-        sniffer.printLog();
+	// std::for_each(sniffers.begin(), sniffers.end(), [&sniffers](Sniffer &sniffer) {
+	// 	try
+	// 	{
+	// 		sniffer.printInfo();
+	// 		sniffer.startCapture();
+	// 	}
+	// 	catch(const std::exception& e)
+	// 	{
+	// 		std::cerr << e.what() << '\n';
+	// 		std::remove(sniffers.begin(), sniffers.end(), sniffer);
+	// 	}
+	// });
+	// // 定时捕获测试
+	// pcpp::multiPlatformSleep(5);
+	// std::for_each(sniffers.begin(), sniffers.end(), [](Sniffer &sniffer) {
+	// 	sniffer.stopCapture();
+    //     sniffer.printLog();
 
-	});
+	// });
 
 
 	// std::cout << "SQlite3 version " << SQLite::VERSION << " (" << SQLite::getLibVersion() << ")" << std::endl;

@@ -25,43 +25,53 @@ void DataManager::insertLog()
 
 void DataManager::consumePacket(pcpp::Packet &packet)
 {   
-    // 链接层
-    pcpp::Layer *curLayer = packet.getFirstLayer();
-    if(curLayer == NULL)
-        throw sniffer::WithoutLayer("未找到任何协议层");
 
-    DataLinkLayer dlLayer = DataLinkLayer(curLayer, packet);
+    for (pcpp::Layer* curLayer = packet.getFirstLayer(); curLayer != NULL; curLayer = curLayer->getNextLayer())
+    {
+        switch (curLayer->getOsiModelLayer())
+        {
+            // 链路层
+        case pcpp::OsiModelDataLinkLayer:{
+            DataLinkLayer dlLayer = DataLinkLayer(curLayer, packet);
+            dlLayer.printLayer();
+        }break;
 
-    if(dlLayer.getType() != pcpp::Ethernet)
-        return;
+            // 网络层
+        case pcpp::OsiModelNetworkLayer:{
+            NetworkLayer nwLayer = NetworkLayer(curLayer, packet);
+            nwLayer.printLayer();
+        }break;
 
-    // 网络层
-    curLayer = curLayer->getNextLayer();
-    if(curLayer == NULL)
-        throw sniffer::WithoutLayer("未找到网络层");
+            // 传输层
+        case pcpp::OsiModelTransportLayer:{
+            TransportLayer tpLayer = TransportLayer(curLayer, packet);
+            tpLayer.printLayer();
+        }break;
 
-    NetworkLayer nwLayer = NetworkLayer(curLayer, packet);
-    
-    // 传输层
-    curLayer = curLayer->getNextLayer();
-    if(curLayer == NULL)
-        throw sniffer::WithoutLayer("未找到传输层");
+            // 应用层
+        case pcpp::OsiModelSesionLayer:
+        case pcpp::OsiModelPresentationLayer:
+        case pcpp::OsiModelApplicationLayer:{
+            ApplicationLayer appLayer = ApplicationLayer(curLayer, packet);
+            appLayer.printLayer();
+        }break;
+        default:
+            throw sniffer::WithoutLayer("Unknown layer type");
+            break;
+        }
+    }
 
-    TransportLayer tpLayer = TransportLayer(curLayer, packet);
+    std::cout << "********************************" << std::endl;
 
-    // 应用层
-    // 会话层和表示层不处理
-
-
-    this->logs.push_back(DataManager::log_t{
-        dlLayer.getSrcMac(),
-        dlLayer.getDstMac(),
-        getDataLinkLayerType(dlLayer.getType()),
-        nwLayer.getSrcIp(),
-        nwLayer.getDstIp(),
-        getNetworkLayerType(nwLayer.getType()),
-        tpLayer.getSrcPort(),
-        tpLayer.getDstPort(),
-        getTransportLayerType(tpLayer.getType())
-    });
+    // this->logs.push_back(DataManager::log_t{
+    //     dlLayer.getSrcMac(),
+    //     dlLayer.getDstMac(),
+    //     getDataLinkLayerType(dlLayer.getType()),
+    //     nwLayer.getSrcIp(),
+    //     nwLayer.getDstIp(),
+    //     getNetworkLayerType(nwLayer.getType()),
+    //     tpLayer.getSrcPort(),
+    //     tpLayer.getDstPort(),
+    //     getTransportLayerType(tpLayer.getType())
+    // });
 }

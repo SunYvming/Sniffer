@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.13)
 
 project(Sniffer)
 
-include_directories(include third_party/PcapPlusPlus/include
+include_directories(include 
+                    third_party/PcapPlusPlus/include
                     third_party/SQLiteCpp/include
                     third_party/boost/include)
 
