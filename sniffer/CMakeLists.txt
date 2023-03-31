@@ -17,6 +17,9 @@ set(SQLiteCpp_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/SQLiteCpp/lib/cmake/SQ
 set(Boost_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/boost/lib/cmake/Boost-1.81.0)
 set(Boost_NO_SYSTEM_PATHS ON)
 
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
+# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+
 find_package(PcapPlusPlus REQUIRED)
 find_package(SQLiteCpp REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
