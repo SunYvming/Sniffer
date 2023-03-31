@@ -26,18 +26,10 @@ class DataManager
 
         void insertLog();
 
-        void printToConsole()
-        {
-            std::for_each(logs.begin(), logs.end(), [](log_t log){
-                std::cout << log.dlType << "->" << log.nwType << "->" << log.tpType << std::endl;
-                std::cout << "From" << log.srcIp << ":"<<log.srcPort << "(" << log.srcMac<< ")" << " to " << log.dstIp << ":" << log.dstPort<< "(" << log.srcMac<< ")" << std::endl;
-                std::cout << "---------------------------------" << std::endl;
-            });
-        }
+        ~DataManager(){};
 
     private:
         static SQLite::Database* db;
-        std::vector<log_t> logs;
 
 };
 

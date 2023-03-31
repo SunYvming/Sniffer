@@ -22,7 +22,11 @@ class Sniffer
             this->dns = dev->getDnsServers();
             this->ip = dev->getIPv4Address();
 
-            this->dm = new DataManager();
+        }
+
+        ~Sniffer()
+        {
+            // delete this->dm;
         }
 
         bool operator==(const Sniffer& other)
@@ -70,7 +74,7 @@ class Sniffer
         bool deviceOpened = false;
         void openDevice();
 
-        DataManager* dm;
+        DataManager dm;
         
 };
 
