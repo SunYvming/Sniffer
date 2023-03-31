@@ -18,6 +18,22 @@
 
 #include "exception.hpp"
 
+const char* field_name[FIELD_NAME_LENGTH]={
+    PCPP_HTTP_HOST_FIELD,
+    PCPP_HTTP_CONNECTION_FIELD,
+    PCPP_HTTP_USER_AGENT_FIELD,
+    PCPP_HTTP_REFERER_FIELD,
+    PCPP_HTTP_ACCEPT_FIELD,
+    PCPP_HTTP_ACCEPT_LANGUAGE_FIELD,
+    PCPP_HTTP_ACCEPT_ENCODING_FIELD,
+    PCPP_HTTP_COOKIE_FIELD,
+    PCPP_HTTP_CONTENT_LENGTH_FIELD,
+    PCPP_HTTP_CONTENT_TYPE_FIELD,
+    PCPP_HTTP_CONTENT_ENCODING_FIELD,
+    PCPP_HTTP_TRANSFER_ENCODING_FIELD,
+    PCPP_HTTP_SERVER_FIELD
+};
+
 std::string getDataLinkLayerType(pcpp::ProtocolType protocolType)
 {
     switch (protocolType)
@@ -341,16 +357,14 @@ std::string printHttpMethod(pcpp::HttpRequestLayer::HttpMethod httpMethod)
     }
 }
 
-ApplicationLayer::appLayer_t* ApplicationLayer::parse(pcpp::Packet &packet , Layer *layer){
-    if (layer->getType() == pcpp::HTTPRequest){
+void ApplicationLayer::parse(pcpp::Packet &packet){
+    if (this->getType() == pcpp::HTTPRequest){
         pcpp::HttpRequestLayer* httpRequestLayer = packet.getLayerOfType<pcpp::HttpRequestLayer>();
         if (httpRequestLayer == NULL)
         {
             throw sniffer::WithoutLayer("应用层类型为HTTP请求层，但未能解析HTTP请求层");
         }
 
-        ApplicationLayer::appLayer_t* appLayer = new ApplicationLayer::appLayer_t();
-        appLayer->layer = layer;
         ApplicationLayer::httpData_t* data = new ApplicationLayer::httpData_t();
 
         data->method = printHttpMethod(httpRequestLayer->getFirstLine()->getMethod());
@@ -358,141 +372,97 @@ ApplicationLayer::appLayer_t* ApplicationLayer::parse(pcpp::Packet &packet , Lay
         data->version = httpRequestLayer->getFirstLine()->getVersion();
         data->url = httpRequestLayer->getUrl();
 
-        data->host = httpRequestLayer->getFieldByName(PCPP_HTTP_HOST_FIELD)->getFieldValue();
-        data->connection = httpRequestLayer->getFieldByName(PCPP_HTTP_CONNECTION_FIELD)->getFieldValue();
-        data->userAgent = httpRequestLayer->getFieldByName(PCPP_HTTP_USER_AGENT_FIELD)->getFieldValue();
-        data->referer = httpRequestLayer->getFieldByName(PCPP_HTTP_REFERER_FIELD)->getFieldValue();
-        data->accept = httpRequestLayer->getFieldByName(PCPP_HTTP_ACCEPT_FIELD)->getFieldValue();
-        data->acceptLanguage = httpRequestLayer->getFieldByName(PCPP_HTTP_ACCEPT_LANGUAGE_FIELD)->getFieldValue();
-        data->acceptEncoding = httpRequestLayer->getFieldByName(PCPP_HTTP_ACCEPT_ENCODING_FIELD)->getFieldValue();
-        data->cookie = httpRequestLayer->getFieldByName(PCPP_HTTP_COOKIE_FIELD)->getFieldValue();
-        data->contentLen = httpRequestLayer->getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD)->getFieldValue();
-        data->contentType = httpRequestLayer->getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue();
-        data->contentEncoding = httpRequestLayer->getFieldByName(PCPP_HTTP_CONTENT_ENCODING_FIELD)->getFieldValue();
-        data->transferEncoding = httpRequestLayer->getFieldByName(PCPP_HTTP_TRANSFER_ENCODING_FIELD)->getFieldValue();
-        data->server = httpRequestLayer->getFieldByName(PCPP_HTTP_SERVER_FIELD)->getFieldValue();
+        for(int i=0;i < FIELD_NAME_LENGTH;i++){
+            pcpp::HeaderField* field = httpRequestLayer->getFieldByName(field_name[i]);
+            if(field != NULL){
+                data->fields[i] = field->getFieldValue();
+            }
+            else{
+                data->fields[i] = "(without this field)";
+            }
+        }
 
-        appLayer->data = data;
-
-        return appLayer;
+        this->data = data;
     }
-    else if(layer->getType() == pcpp::HTTPResponse){
+    else if(this->getType() == pcpp::HTTPResponse){
         pcpp::HttpResponseLayer* httpResponseLayer = packet.getLayerOfType<pcpp::HttpResponseLayer>();
         if (httpResponseLayer == NULL)
         {
             throw sniffer::WithoutLayer("应用层类型为HTTP响应层，但未能解析HTTP响应层");
         }
 
-        ApplicationLayer::appLayer_t* appLayer = new ApplicationLayer::appLayer_t();
-        appLayer->layer = layer;
         ApplicationLayer::httpData_t* data = new ApplicationLayer::httpData_t();
 
         data->version = httpResponseLayer->getFirstLine()->getVersion();
         data->stateCode = httpResponseLayer->getFirstLine()->getStatusCodeAsInt();
         data->stateMsg = httpResponseLayer->getFirstLine()->getStatusCodeString();
 
-        data->host = httpResponseLayer->getFieldByName(PCPP_HTTP_HOST_FIELD)->getFieldValue();
-        data->connection = httpResponseLayer->getFieldByName(PCPP_HTTP_CONNECTION_FIELD)->getFieldValue();
-        data->userAgent = httpResponseLayer->getFieldByName(PCPP_HTTP_USER_AGENT_FIELD)->getFieldValue();
-        data->referer = httpResponseLayer->getFieldByName(PCPP_HTTP_REFERER_FIELD)->getFieldValue();
-        data->accept = httpResponseLayer->getFieldByName(PCPP_HTTP_ACCEPT_FIELD)->getFieldValue();
-        data->acceptLanguage = httpResponseLayer->getFieldByName(PCPP_HTTP_ACCEPT_LANGUAGE_FIELD)->getFieldValue();
-        data->acceptEncoding = httpResponseLayer->getFieldByName(PCPP_HTTP_ACCEPT_ENCODING_FIELD)->getFieldValue();
-        data->cookie = httpResponseLayer->getFieldByName(PCPP_HTTP_COOKIE_FIELD)->getFieldValue();
-        data->contentLen = httpResponseLayer->getFieldByName(PCPP_HTTP_CONTENT_LENGTH_FIELD)->getFieldValue();
-        data->contentType = httpResponseLayer->getFieldByName(PCPP_HTTP_CONTENT_TYPE_FIELD)->getFieldValue();
-        data->contentEncoding = httpResponseLayer->getFieldByName(PCPP_HTTP_CONTENT_ENCODING_FIELD)->getFieldValue();
-        data->transferEncoding = httpResponseLayer->getFieldByName(PCPP_HTTP_TRANSFER_ENCODING_FIELD)->getFieldValue();
-        data->server = httpResponseLayer->getFieldByName(PCPP_HTTP_SERVER_FIELD)->getFieldValue();
+        for(int i=0;i < FIELD_NAME_LENGTH;i++){
+            pcpp::HeaderField* field = httpResponseLayer->getFieldByName(field_name[i]);
+            if(field != NULL){
+                data->fields[i] = field->getFieldValue();
+            }
+            else{
+                data->fields[i] = "(without this field)";
+            }
+        }
 
-        appLayer->data = data;
-
-        return appLayer;
+        this->data = data;
     }
     else{
-        ApplicationLayer::appLayer_t* appLayer = new ApplicationLayer::appLayer_t();
-        appLayer->layer = layer;
-        appLayer->data = nullptr;
-        return appLayer;
+        ;
     }
-    
-    return nullptr;
 }
 
-void printSubLayer(ApplicationLayer::appLayer_t* appLayer){
-    if(appLayer->layer->getType()==pcpp::HTTPRequest){
+void ApplicationLayer::printLayer()
+{
+    if(this->getType()==pcpp::HTTPRequest){
         std::cout << "HTTP Request Layer" << std::endl;
-        if(appLayer->data != nullptr){
-            ApplicationLayer::httpData_t* data = (ApplicationLayer::httpData_t*)appLayer->data;
+        if(this->data != nullptr){
+            ApplicationLayer::httpData_t* data = (ApplicationLayer::httpData_t*)(this->data);
             std::cout << "HTTP Method: " << data->method << std::endl;
-            std::cout << "HTTP Server: " << data->server << std::endl;
             std::cout << "HTTP URI: " << data->uri << std::endl;
             std::cout << "HTTP Version: " << data->version << std::endl;
             std::cout << "HTTP URL: " << data->url << std::endl;
-            std::cout << "HTTP Host: " << data->host << std::endl;
-            std::cout << "HTTP Connection: " << data->connection << std::endl;
-            std::cout << "HTTP User-Agent: " << data->userAgent << std::endl;
-            std::cout << "HTTP Referer: " << data->referer << std::endl;
-            std::cout << "HTTP Accept: " << data->accept << std::endl;
-            std::cout << "HTTP Accept-Language: " << data->acceptLanguage << std::endl;
-            std::cout << "HTTP Accept-Encoding: " << data->acceptEncoding << std::endl;
-            std::cout << "HTTP Cookie: " << data->cookie << std::endl;
-            std::cout << "HTTP Content-Length: " << data->contentLen << std::endl;
-            std::cout << "HTTP Content-Type: " << data->contentType << std::endl;
-            std::cout << "HTTP Content-Encoding: " << data->contentEncoding << std::endl;
-            std::cout << "HTTP Transfer-Encoding: " << data->transferEncoding << std::endl;   
+            for(int i=0;i < FIELD_NAME_LENGTH;i++){
+                std::cout << "HTTP " << field_name[i] << ": " << data->fields[i] << std::endl;
+            }
         }
     }
-    else if(appLayer->layer->getType()==pcpp::HTTPResponse){
+    else if(this->getType()==pcpp::HTTPResponse){
         std::cout << "HTTP Response Layer" << std::endl;
-        if(appLayer->data != nullptr){
-            ApplicationLayer::httpData_t* data = (ApplicationLayer::httpData_t*)appLayer->data;
+        if(this->data != nullptr){
+            ApplicationLayer::httpData_t* data = (ApplicationLayer::httpData_t*)(this->data);
             std::cout << "HTTP Version: " << data->version << std::endl;
             std::cout << "HTTP State Code: " << data->stateCode << std::endl;
             std::cout << "HTTP State Msg: " << data->stateMsg << std::endl;
-            std::cout << "HTTP Host: " << data->host << std::endl;
-            std::cout << "HTTP Connection: " << data->connection << std::endl;
-            std::cout << "HTTP User-Agent: " << data->userAgent << std::endl;
-            std::cout << "HTTP Referer: " << data->referer << std::endl;
-            std::cout << "HTTP Accept: " << data->accept << std::endl;
-            std::cout << "HTTP Accept-Language: " << data->acceptLanguage << std::endl;
-            std::cout << "HTTP Accept-Encoding: " << data->acceptEncoding << std::endl;
-            std::cout << "HTTP Cookie: " << data->cookie << std::endl;
-            std::cout << "HTTP Content-Length: " << data->contentLen << std::endl;
-            std::cout << "HTTP Content-Type: " << data->contentType << std::endl;
-            std::cout << "HTTP Content-Encoding: " << data->contentEncoding << std::endl;
-            std::cout << "HTTP Transfer-Encoding: " << data->transferEncoding << std::endl;
-            std::cout << "HTTP Server: " << data->server << std::endl;
+            for(int i=0;i < FIELD_NAME_LENGTH;i++){
+                std::cout << "HTTP " << field_name[i] << ": " << data->fields[i] << std::endl;
+            }
         }
     }
-    else if(appLayer->layer->getType()==pcpp::HTTP){
+    else if(this->getType()==pcpp::HTTP){
         std::cout << "HTTP Layer" << std::endl;
     }
-    else if(appLayer->layer->getType()==pcpp::SSL){
+    else if(this->getType()==pcpp::SSL){
         std::cout << "SSL Layer" << std::endl;
     }
-    else if(appLayer->layer->getType()==pcpp::DNS){
+    else if(this->getType()==pcpp::DNS){
         std::cout << "DNS Layer" << std::endl;
     }
-    else if(appLayer->layer->getType()==pcpp::SSH){
+    else if(this->getType()==pcpp::SSH){
         std::cout << "SSH Layer" << std::endl;
     }
-    else if(appLayer->layer->getType()==pcpp::FTP){
+    else if(this->getType()==pcpp::FTP){
         std::cout << "FTP Layer" << std::endl;
     }
-    else if(appLayer->layer->getType()==pcpp::GenericPayload){
+    else if(this->getType()==pcpp::GenericPayload){
         std::cout << "Generic Payload Layer" << std::endl;
     }
     else{
         std::cout << "Other Layer" << std::endl;
     }
-    std::cout << "Layer data len:" << appLayer->layer->getDataLen() << std::endl;
-    std::cout << "Payload data len:" << appLayer->layer->getPayloadLen() << std::endl;
-    std::cout << "--------------------------------" << std::endl;
-}
-
-void ApplicationLayer::printLayer()
-{
-    std::for_each(this->appLayers.begin(), this->appLayers.end(), printSubLayer);
+    std::cout << "Layer data len:" << this->getDataLen() << std::endl;
+    std::cout << "Payload data len:" << this->getPayloadLen() << std::endl;
     std::cout << "================================" << std::endl;
 }

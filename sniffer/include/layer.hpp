@@ -9,8 +9,14 @@
 #include "Packet.h"
 #include "Layer.h"
 #include "TcpLayer.h"
+#include "HttpLayer.h"
 
 #include "exception.hpp"
+
+#define FIELD_NAME_LENGTH 13
+
+extern const char* field_name[FIELD_NAME_LENGTH];
+
 
 std::string getDataLinkLayerType(pcpp::ProtocolType protocolType);
 std::string getNetworkLayerType(pcpp::ProtocolType protocolType);
@@ -137,6 +143,12 @@ class TransportLayer : public Layer
             }
         }
 
+        ~TransportLayer(){
+            for(auto &option : this->tcpOptions){
+                delete option;
+            }
+        }
+
         void parse(pcpp::Packet &packet) override;
 
         void printLayer() override;
@@ -162,12 +174,6 @@ class TransportLayer : public Layer
 class ApplicationLayer : public Layer
 {
     public:
-        typedef struct 
-        {
-            Layer* layer = nullptr;
-            void* data = nullptr;
-        }appLayer_t;
-
         typedef struct
         {
             std::string method;
@@ -178,70 +184,31 @@ class ApplicationLayer : public Layer
             std::string stateMsg;
 
             std::string url;
-            std::string host;
-            std::string connection;
-            std::string userAgent;
-            std::string referer;
-            std::string accept;
-            std::string acceptLanguage;
-            std::string acceptEncoding;
-            std::string cookie;
-            std::string contentLen;
-            std::string contentEncoding;
-            std::string contentType;
-            std::string transferEncoding;
-            std::string server;
+
+            std::string fields[FIELD_NAME_LENGTH];
         }httpData_t;
         
 
         ApplicationLayer(pcpp::Layer *layer , pcpp::Packet &packet) : Layer(layer){
-            while(layer!=NULL)
+            try
             {
-                Layer *curlayer = new Layer(layer);
-                appLayer_t *applayer = nullptr;
-                try
-                {
-                    applayer = parse(packet , curlayer);
-                }
-                catch(const std::exception& e)
-                {
-                    std::cerr << e.what() << '\n';
-                    applayer = new appLayer_t();
-                    applayer->layer = curlayer;
-                    applayer->data = nullptr;
-                }
-                if(applayer != nullptr)
-                {
-                    this->appLayers.push_back(applayer);
-                }
-                else{
-                    delete curlayer;
-                }
-                layer = layer->getNextLayer();
+                this->parse(packet);
+            }
+            catch(sniffer::WithoutLayer &e){
+                std::cout << e.what() << std::endl;
             }
         }
 
         ~ApplicationLayer(){
-            for (auto& appLayer : appLayers) { 
-                if(appLayer->data != nullptr)
-                {
-                    delete appLayer->data;
-                }
-                if(appLayer->layer != nullptr)
-                {
-                    delete appLayer->layer;
-                }
-                delete appLayer; 
-            }
+
         }
 
-        void parse(pcpp::Packet &packet) override{}
-        appLayer_t* parse(pcpp::Packet &packet , Layer *layer);
+        void parse(pcpp::Packet &packet) override;
 
         void printLayer() override;
 
     private:
-        std::vector<appLayer_t*> appLayers;
+        void* data = nullptr;
 };
 
 
