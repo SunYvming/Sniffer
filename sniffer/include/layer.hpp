@@ -21,6 +21,7 @@ extern const char* field_name[FIELD_NAME_LENGTH];
 std::string getDataLinkLayerType(pcpp::ProtocolType protocolType);
 std::string getNetworkLayerType(pcpp::ProtocolType protocolType);
 std::string getTransportLayerType(pcpp::ProtocolType protocolType);
+std::string getApplicationLayerType(pcpp::ProtocolType protocolType);
 
 class Layer
 {

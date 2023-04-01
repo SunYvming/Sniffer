@@ -9,27 +9,24 @@
 class DataManager
 {
     public:
-        typedef struct{
-            std::string srcMac;
-            std::string dstMac;
-            std::string dlType;
-
-            std::string srcIp;
-            std::string dstIp;
-            std::string nwType;
-
-            uint16_t srcPort;
-            uint16_t dstPort;
-            std::string tpType;
-        }log_t;
         void consumePacket(pcpp::Packet& packet);
 
-        void insertLog();
-
+        static void insertLog(uint64_t sec, uint64_t nsec, std::string dev,std::string srcMac, std::string dstMac, std::string dlType, std::string srcIp, std::string dstIp, std::string nwType, uint16_t srcPort, uint16_t dstPort, std::string tpType, uint8_t layerNum);
+        static void insertLayer(uint64_t sec, uint64_t nsec, std::string dev, uint8_t layerNum, std::string src, std::string dst, std::string layerType, std::string type, uint16_t len, uint8_t* data);
         ~DataManager(){};
 
+        std::string getDev(){
+            return this->dev;
+        }
+
+        void setDev(std::string dev){
+            this->dev = dev;
+        }
+
     private:
+        static void init();
         static SQLite::Database* db;
+        std::string dev;
 
 };
 

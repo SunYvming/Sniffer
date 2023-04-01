@@ -22,6 +22,7 @@ class Sniffer
             this->dns = dev->getDnsServers();
             this->ip = dev->getIPv4Address();
 
+            this->dm.setDev(this->name);
         }
 
         ~Sniffer()

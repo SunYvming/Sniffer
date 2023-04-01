@@ -15,16 +15,146 @@
 #include "UdpLayer.h"
 // #include "PcapLiveDeviceList.h"
 
-//  测试用简化版
-void DataManager::insertLog()
+SQLite::Database* DataManager::db = nullptr;
+
+void DataManager::init()
 {
-    // 若数据库未打开，打开数据库
-    // 若表log没有，建表
-    // 若表ethernet没有，建表
+    SQLite::Database* newdb = new SQLite::Database("logs.db", SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE);
+    // setDB(db);
+    DataManager::db = newdb;
+    // 建表 log
+    newdb->exec("CREATE TABLE IF NOT EXISTS log ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "sec BIGINT,"
+            "nsec BIGINT,"
+            "dev TEXT,"
+            "srcMac TEXT,"
+            "dstMac TEXT,"
+            "dlType TEXT,"
+            "srcIp TEXT,"
+            "dstIp TEXT,"
+            "nwType TEXT,"
+            "srcPort INTEGER,"
+            "dstPort INTEGER,"
+            "tpType TEXT,"
+            "layerNum INTEGER"
+            ");");
+    // 建表 layer
+    newdb->exec("CREATE TABLE IF NOT EXISTS layer ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "sec BIGINT,"
+            "nsec BIGINT,"
+            "dev TEXT,"
+            "layerNum INTEGER,"
+            "src TEXT,"
+            "dst TEXT,"
+            "layerType TEXT,"
+            "type TEXT,"
+            "len INTEGER,"
+            "data BLOB"
+            ");");
+    // 建表 tcp
+    newdb->exec("CREATE TABLE IF NOT EXISTS tcp ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "sec BIGINT,"
+            "nsec BIGINT,"
+            "dev TEXT,"
+            "layerNum INTEGER,"
+            "seqNum INTEGER,"
+            "ackNum INTEGER,"
+            "windowSize INTEGER,"
+            "flags TEXT,"
+            "optionNum INTEGER"
+            ");");
+    // 建表 tcp option
+    newdb->exec("CREATE TABLE IF NOT EXISTS tcpOption ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "sec BIGINT,"
+            "nsec BIGINT,"
+            "dev TEXT,"
+            "layerNum INTEGER,"
+            "optionType TEXT,"
+            "optionData BLOB"
+            ");");
+}
+
+//  插入log
+void DataManager::insertLog(uint64_t sec, uint64_t nsec, std::string dev,std::string srcMac, std::string dstMac, std::string dlType, std::string srcIp, std::string dstIp, std::string nwType, uint16_t srcPort, uint16_t dstPort, std::string tpType, uint8_t layerNum)
+{
+    try{
+        // 打开数据库
+        if(DataManager::db == nullptr)
+            init();
+        if(DataManager::db == nullptr)
+            return;
+        // 插入数据
+        SQLite::Statement query(*DataManager::db, "INSERT INTO log (sec, nsec, dev, srcMac, dstMac, dlType, srcIp, dstIp, nwType, srcPort, dstPort, tpType, layerNum) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);");
+        query.bind(1, int64_t(sec));
+        query.bind(2, int64_t(nsec));
+        query.bind(3, dev);
+        query.bind(4, srcMac);
+        query.bind(5, dstMac);
+        query.bind(6, dlType);
+        query.bind(7, srcIp);
+        query.bind(8, dstIp);
+        query.bind(9, nwType);
+        query.bind(10, srcPort);
+        query.bind(11, dstPort);
+        query.bind(12, tpType);
+        query.bind(13, layerNum);
+        query.exec();
+    }
+    catch (std::exception& e){
+        std::cout << e.what() << std::endl;
+    }
+}
+
+// 插入layer
+void DataManager::insertLayer(uint64_t sec, uint64_t nsec, std::string dev, uint8_t layerNum, std::string src, std::string dst, std::string layerType, std::string type, uint16_t len, uint8_t* data)
+{
+    try{
+        // 打开数据库
+        if(DataManager::db == nullptr)
+            init();
+        if(DataManager::db == nullptr)
+            return;
+        // 插入数据
+        SQLite::Statement query(*DataManager::db, "INSERT INTO layer (sec, nsec, dev, layerNum, src, dst, layerType, type, len, data) VALUES (?,?,?,?,?,?,?,?,?,?);");
+        query.bind(1, int64_t(sec));
+        query.bind(2, int64_t(nsec));
+        query.bind(3, dev);
+        query.bind(4, layerNum);
+        query.bind(5, src);
+        query.bind(6, dst);
+        query.bind(7, layerType);
+        query.bind(8, type);
+        query.bind(9, len);
+        query.bind(10, data, len);
+        query.exec();
+    }
+    catch (std::exception& e){
+        std::cout << e.what() << std::endl;
+    }
 }
 
 void DataManager::consumePacket(pcpp::Packet &packet)
 {   
+    long sec;
+    long nsec;
+    pcpp::clockGetTime(sec,nsec);
+    std::string srcMac="";
+    std::string dstMac="";
+    std::string dlType="";
+    std::string srcIp="";
+    std::string dstIp="";
+    std::string nwType="";
+    uint16_t srcPort=0;
+    uint16_t dstPort=0;
+    std::string tpType="";
+
+    std::string dev = this->getDev();
+
+    int layerNum = 0;
 
     for (pcpp::Layer* curLayer = packet.getFirstLayer(); curLayer != NULL; curLayer = curLayer->getNextLayer())
     {
@@ -33,19 +163,46 @@ void DataManager::consumePacket(pcpp::Packet &packet)
             // 链路层
         case pcpp::OsiModelDataLinkLayer:{
             DataLinkLayer dlLayer = DataLinkLayer(curLayer, packet);
-            dlLayer.printLayer();
+            std::string layerType = "DataLinkLayer";
+            uint16_t len = dlLayer.getDataLen();
+            uint8_t* data = dlLayer.getData();
+            if(dlLayer.getType() == pcpp::PacketTrailer){
+                std::string ptType = getDataLinkLayerType(dlLayer.getType());
+                insertLayer(sec, nsec, dev,layerNum, "", "", layerType, ptType, len, data);
+            }
+            else{
+                srcMac = dlLayer.getSrcMac();
+                dstMac = dlLayer.getDstMac();
+                dlType = getDataLinkLayerType(dlLayer.getType());
+                insertLayer(sec, nsec, dev, layerNum, srcMac, dstMac, layerType, dlType, len, data);
+            }
+            // dlLayer.printLayer();
         }break;
 
             // 网络层
         case pcpp::OsiModelNetworkLayer:{
             NetworkLayer nwLayer = NetworkLayer(curLayer, packet);
-            nwLayer.printLayer();
+            srcIp = nwLayer.getSrcIp();
+            dstIp = nwLayer.getDstIp();
+            nwType = getNetworkLayerType(nwLayer.getType());
+            std::string layerType = "NetworkLayer";
+            uint16_t len = nwLayer.getDataLen();
+            uint8_t* data = nwLayer.getData();
+            insertLayer(sec, nsec, dev, layerNum, srcIp, dstIp, layerType, nwType, len, data);
+            // nwLayer.printLayer();
         }break;
 
             // 传输层
         case pcpp::OsiModelTransportLayer:{
             TransportLayer tpLayer = TransportLayer(curLayer, packet);
-            tpLayer.printLayer();
+            srcPort = tpLayer.getSrcPort();
+            dstPort = tpLayer.getDstPort();
+            tpType = getTransportLayerType(tpLayer.getType());
+            std::string layerType = "TransportLayer";
+            uint16_t len = tpLayer.getDataLen();
+            uint8_t* data = tpLayer.getData();
+            insertLayer(sec, nsec, dev, layerNum, std::to_string(srcPort), std::to_string(dstPort), layerType, tpType, len, data);
+            // tpLayer.printLayer();
         }break;
 
             // 应用层
@@ -53,25 +210,20 @@ void DataManager::consumePacket(pcpp::Packet &packet)
         case pcpp::OsiModelPresentationLayer:
         case pcpp::OsiModelApplicationLayer:{
             ApplicationLayer appLayer = ApplicationLayer(curLayer, packet);
-            appLayer.printLayer();
+            std::string appType = getApplicationLayerType(appLayer.getType());
+            std::string layerType = "ApplicationLayer";
+            uint16_t len = appLayer.getDataLen();
+            uint8_t* data = appLayer.getData();
+            insertLayer(sec, nsec, dev, layerNum, "", "", layerType, appType, len, data);
+            // appLayer.printLayer();
         }break;
         default:
             throw sniffer::WithoutLayer("Unknown layer type");
             break;
         }
+        layerNum++;
     }
 
-    std::cout << "********************************" << std::endl;
-
-    // this->logs.push_back(DataManager::log_t{
-    //     dlLayer.getSrcMac(),
-    //     dlLayer.getDstMac(),
-    //     getDataLinkLayerType(dlLayer.getType()),
-    //     nwLayer.getSrcIp(),
-    //     nwLayer.getDstIp(),
-    //     getNetworkLayerType(nwLayer.getType()),
-    //     tpLayer.getSrcPort(),
-    //     tpLayer.getDstPort(),
-    //     getTransportLayerType(tpLayer.getType())
-    // });
+    insertLog(sec, nsec, dev, srcMac, dstMac, dlType, srcIp, dstIp, nwType, srcPort, dstPort, tpType, layerNum);
+    // std::cout << "********************************" << std::endl;
 }

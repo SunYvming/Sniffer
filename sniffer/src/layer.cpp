@@ -73,6 +73,25 @@ std::string getNetworkLayerType(pcpp::ProtocolType protocolType)
         return "IPv4";
     case pcpp::IPv6:
         return "IPv6";
+    case pcpp::ARP:
+        return "ARP";
+    case pcpp::GREv0:
+        return "GREv0";
+    case pcpp::GREv1:
+        return "GREv1";
+    case pcpp::GRE:
+        return "GRE";
+    case pcpp::MPLS:
+        return "MPLS";
+    case pcpp::ICMP:
+        return "ICMP";
+    case pcpp::ICMPv6:
+        return "ICMPv6";
+    case pcpp::IGMP:
+    case pcpp::IGMPv1:
+    case pcpp::IGMPv2:
+    case pcpp::IGMPv3:
+        return "IGMP";
     default:
         return "Unknown";
     }
@@ -95,10 +114,24 @@ std::string getApplicationLayerType(pcpp::ProtocolType protocolType)
 {
     switch(protocolType)
     {
+    case pcpp::HTTPRequest:
+        return "HTTPRequest";
+    case pcpp::HTTPResponse:
+        return "HTTPResponse";
     case pcpp::HTTP:
         return "HTTP";
+    case pcpp::SSL:
+        return "SSL";
+    case pcpp::DNS:
+        return "DNS";
+    case pcpp::SSH:
+        return "SSH";
+    case pcpp::FTP:
+        return "FTP";
+    case pcpp::GenericPayload:
+        return "GenericPayload";
     default:
-        return "Unknown";
+        return "Other Layer";
     }
 }
 

@@ -45,5 +45,5 @@ void Sniffer::startCapture(int timeout)
 void Sniffer::stopCapture()
 {
     this->dev->stopCapture();
-    std::cout << this->dev->getName() << std::endl;
+    // std::cout << this->dev->getName() << std::endl;
 }
