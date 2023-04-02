@@ -15,13 +15,12 @@
 #include "UdpLayer.h"
 // #include "PcapLiveDeviceList.h"
 
-SQLite::Database* DataManager::db = nullptr;
-
-void DataManager::init()
+DataManager::DataManager(std::string dev)
 {
-    SQLite::Database* newdb = new SQLite::Database("logs.db", SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE);
+    this->dev = dev;
+    SQLite::Database* newdb = new SQLite::Database(dev+".db", SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE | SQLite::OPEN_FULLMUTEX);
     // setDB(db);
-    DataManager::db = newdb;
+    this->db = newdb;
     // 建表 log
     newdb->exec("CREATE TABLE IF NOT EXISTS log ("
             "id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -83,7 +82,7 @@ void DataManager::insertLog(uint64_t sec, uint64_t nsec, std::string dev,std::st
 {
     try{
         // 插入数据
-        SQLite::Statement query(*DataManager::db, "INSERT INTO log (sec, nsec, dev, srcMac, dstMac, dlType, srcIp, dstIp, nwType, srcPort, dstPort, tpType, layerNum) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);");
+        SQLite::Statement query(*db, "INSERT INTO log (sec, nsec, dev, srcMac, dstMac, dlType, srcIp, dstIp, nwType, srcPort, dstPort, tpType, layerNum) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);");
         query.bind(1, int64_t(sec));
         query.bind(2, int64_t(nsec));
         query.bind(3, dev);
@@ -109,7 +108,7 @@ void DataManager::insertLayer(uint64_t sec, uint64_t nsec, std::string dev, uint
 {
     try{
         // 插入数据
-        SQLite::Statement query(*DataManager::db, "INSERT INTO layer (sec, nsec, dev, layerNum, src, dst, layerType, type, len, data) VALUES (?,?,?,?,?,?,?,?,?,?);");
+        SQLite::Statement query(*db, "INSERT INTO layer (sec, nsec, dev, layerNum, src, dst, layerType, type, len, data) VALUES (?,?,?,?,?,?,?,?,?,?);");
         query.bind(1, int64_t(sec));
         query.bind(2, int64_t(nsec));
         query.bind(3, dev);
@@ -146,13 +145,7 @@ void DataManager::consumePacket(pcpp::Packet &packet)
 
     int layerNum = 0;
 
-    // 打开数据库
-    if(DataManager::db == nullptr)
-        init();
-    if(DataManager::db == nullptr)
-        return;
-
-    SQLite::Transaction transaction(*DataManager::db);
+    SQLite::Transaction transaction(*db);
     
 
     for (pcpp::Layer* curLayer = packet.getFirstLayer(); curLayer != NULL; curLayer = curLayer->getNextLayer())

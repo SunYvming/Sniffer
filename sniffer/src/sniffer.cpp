@@ -39,7 +39,7 @@ void Sniffer::startCapture(int timeout)
         return;
     }
 
-    this->dev->startCapture(onPacketArrives, &this->dm);
+    this->dev->startCapture(onPacketArrives, this->dm);
 }
 
 void Sniffer::stopCapture()
