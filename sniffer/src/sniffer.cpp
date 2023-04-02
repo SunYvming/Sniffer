@@ -47,3 +47,14 @@ void Sniffer::stopCapture()
     this->dev->stopCapture();
     // std::cout << this->dev->getName() << std::endl;
 }
+
+bool Sniffer::taggleCap(){
+    if(dev->captureActive()){
+        stopCapture();
+    }
+    else
+        startCapture();
+    if(dev->captureActive())
+        return true;
+    return false;
+}

@@ -49,19 +49,24 @@ class Sniffer
         void stopCapture();
         void printLog();
 
-        void printInfo()
+        std::string printInfo()
         {
-            std::cout << "Name: " << this->name << std::endl;
-            std::cout << "Description: " << this->description << std::endl;
-            std::cout << "MAC: " << this->mac.toString() << std::endl;
-            std::cout << "Gateway: " << this->gateway.toString() << std::endl;
-            std::cout << "MTU: " << this->mtu << std::endl;
-            std::cout << "DNS: " << std::endl;
+            std::string res = 
+            "Name:        \t\t" + this->name + "\n" +
+            "Description: \t\t" + this->description + "\n" +
+            "MAC:         \t\t" + this->mac.toString() + "\n" +
+            "Gateway:     \t\t" + this->gateway.toString() + "\n" +
+            "MTU:         \t\t" + std::to_string(this->mtu) + "\n" + 
+            "DNS:         ";
             for(auto dns : this->dns)
-                std::cout << "\t" << dns.toString() << std::endl;
-            std::cout << "IP: " << this->ip.toString() << std::endl;
+                res+= "\t\t" + dns.toString() + "\n";
+            res += 
+            "IP:          \t\t" + this->ip.toString() + "\n";
+
+            return res;
         }
 
+        bool taggleCap();
         
     private:
         pcpp::PcapLiveDevice* dev;
