@@ -82,11 +82,6 @@ void DataManager::init()
 void DataManager::insertLog(uint64_t sec, uint64_t nsec, std::string dev,std::string srcMac, std::string dstMac, std::string dlType, std::string srcIp, std::string dstIp, std::string nwType, uint16_t srcPort, uint16_t dstPort, std::string tpType, uint8_t layerNum)
 {
     try{
-        // 打开数据库
-        if(DataManager::db == nullptr)
-            init();
-        if(DataManager::db == nullptr)
-            return;
         // 插入数据
         SQLite::Statement query(*DataManager::db, "INSERT INTO log (sec, nsec, dev, srcMac, dstMac, dlType, srcIp, dstIp, nwType, srcPort, dstPort, tpType, layerNum) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);");
         query.bind(1, int64_t(sec));
@@ -113,11 +108,6 @@ void DataManager::insertLog(uint64_t sec, uint64_t nsec, std::string dev,std::st
 void DataManager::insertLayer(uint64_t sec, uint64_t nsec, std::string dev, uint8_t layerNum, std::string src, std::string dst, std::string layerType, std::string type, uint16_t len, uint8_t* data)
 {
     try{
-        // 打开数据库
-        if(DataManager::db == nullptr)
-            init();
-        if(DataManager::db == nullptr)
-            return;
         // 插入数据
         SQLite::Statement query(*DataManager::db, "INSERT INTO layer (sec, nsec, dev, layerNum, src, dst, layerType, type, len, data) VALUES (?,?,?,?,?,?,?,?,?,?);");
         query.bind(1, int64_t(sec));
@@ -155,6 +145,15 @@ void DataManager::consumePacket(pcpp::Packet &packet)
     std::string dev = this->getDev();
 
     int layerNum = 0;
+
+    // 打开数据库
+    if(DataManager::db == nullptr)
+        init();
+    if(DataManager::db == nullptr)
+        return;
+
+    SQLite::Transaction transaction(*DataManager::db);
+    
 
     for (pcpp::Layer* curLayer = packet.getFirstLayer(); curLayer != NULL; curLayer = curLayer->getNextLayer())
     {
@@ -225,5 +224,8 @@ void DataManager::consumePacket(pcpp::Packet &packet)
     }
 
     insertLog(sec, nsec, dev, srcMac, dstMac, dlType, srcIp, dstIp, nwType, srcPort, dstPort, tpType, layerNum);
+
+    transaction.commit();
+
     // std::cout << "********************************" << std::endl;
 }

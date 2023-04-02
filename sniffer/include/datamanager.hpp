@@ -25,6 +25,7 @@ class DataManager
 
     private:
         static void init();
+
         static SQLite::Database* db;
         std::string dev;
 
