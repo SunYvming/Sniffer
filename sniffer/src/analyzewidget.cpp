@@ -66,6 +66,9 @@ void AnalyzeWidget::updateTable(std::string target){
                     ui->tableWidget->setItem(row,7,new QTableWidgetItem(QString::fromStdString("-----")));
                 else
                     ui->tableWidget->setItem(row,7,new QTableWidgetItem(QString::fromStdString(log.appType)));
+
+                ui->tableWidget->setItem(row,8,new QTableWidgetItem(QString::fromStdString(std::to_string(log.sec))));
+                ui->tableWidget->setItem(row,9,new QTableWidgetItem(QString::fromStdString(std::to_string(log.nsec))));
             }
             break;
         }
@@ -81,7 +84,9 @@ AnalyzeWidget::AnalyzeWidget(QWidget *parent) :
     ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableWidget->verticalHeader()->setVisible(false);
-    ui->tableWidget->setColumnCount(8);
+    ui->tableWidget->setColumnCount(10);
+    ui->tableWidget->setColumnHidden(8,true);
+    ui->tableWidget->setColumnHidden(9,true);
     ui->tableWidget->setHorizontalHeaderLabels(QStringList()<<"时间"<<"源"<<"源mac"<<"目的"<<"目的mac"<<"网络层协议"<<"传输层协议"<<"应用层协议");
     connect(ui->update,&QPushButton::clicked,[=](){
         if(ui->comboBox->currentIndex()==-1)
@@ -100,6 +105,16 @@ AnalyzeWidget::AnalyzeWidget(QWidget *parent) :
         }
         else
             updateTable(text.toStdString());
+    });
+    connect(ui->tableWidget,&QTableWidget::cellDoubleClicked,[=](int row,int col){
+        uint64_t sec = ui->tableWidget->item(row,8)->text().toLong();
+        uint64_t nsec = ui->tableWidget->item(row,9)->text().toLong();
+        for(auto db : dbs){
+            if(db->getDev()==ui->comboBox->currentText().toStdString()){
+                ui->scrollArea->updateLayer(sec,nsec,db);
+                break;
+            }
+        }
     });
 }
 

@@ -12,5 +12,11 @@
   <property name="windowTitle">
    <string>ScrollArea</string>
   </property>
+  <property name="sizeAdjustPolicy">
+   <enum>QAbstractScrollArea::AdjustToContents</enum>
+  </property>
+  <property name="widgetResizable">
+   <bool>true</bool>
+  </property>
  </widget>
 </ui>

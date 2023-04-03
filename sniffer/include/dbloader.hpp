@@ -27,7 +27,16 @@ class DBLoader
         }logInfo_t;
 
         typedef struct{
-
+            uint64_t sec;
+            uint64_t nsec;
+            std::string dev;
+            uint8_t layerNum;
+            std::string src;
+            std::string dst;
+            std::string layerType;
+            std::string type;
+            uint16_t len;
+            uint8_t* data;
         }layerInfo_t;
 
         DBLoader(std::string dev);
@@ -39,62 +48,11 @@ class DBLoader
             return this->dev;
         }
 
-        std::vector<logInfo_t> getAllLogs(){
-            std::vector<logInfo_t> logs;
-            logInfo_t logInfo;
-            SQLite::Statement query(*db, "SELECT * FROM log");
-            while (query.executeStep())
-            {
-                logInfo.sec = query.getColumn(1).getInt64();
-                logInfo.nsec = query.getColumn(2).getInt64();
-                logInfo.dev = query.getColumn(3).getText();
-                logInfo.srcMac = query.getColumn(4).getText();
-                logInfo.dstMac = query.getColumn(5).getText();
-                logInfo.dlType = query.getColumn(6).getText();
-                logInfo.srcIp = query.getColumn(7).getText();
-                logInfo.dstIp = query.getColumn(8).getText();
-                logInfo.nwType = query.getColumn(9).getText();
-                logInfo.srcPort = query.getColumn(10).getInt();
-                logInfo.dstPort = query.getColumn(11).getInt();
-                logInfo.tpType = query.getColumn(12).getText();
-                logInfo.layerNum = query.getColumn(13).getInt();
-                logInfo.appType = query.getColumn(14).getText();
+        std::vector<logInfo_t> getAllLogs();
 
-                logs.push_back(logInfo);
-            }
-            return logs;
-        }
+        std::vector<logInfo_t> getNewLogs();
 
-        std::vector<logInfo_t> getNewLogs(){
-            std::vector<logInfo_t> logs;
-            logInfo_t logInfo;
-            SQLite::Statement query(*db, "SELECT * FROM log WHERE sec > ? OR (sec = ? AND nsec > ?)");
-            query.bind(1, (long)this->lastSec);
-            query.bind(2, (long)this->lastSec);
-            query.bind(3, (long)this->lastNsec);
-            while (query.executeStep())
-            {
-                logInfo.sec = query.getColumn(1).getInt64();
-                this->lastSec = logInfo.sec;
-                logInfo.nsec = query.getColumn(2).getInt64();
-                this->lastNsec = logInfo.nsec;
-                logInfo.dev = query.getColumn(3).getText();
-                logInfo.srcMac = query.getColumn(4).getText();
-                logInfo.dstMac = query.getColumn(5).getText();
-                logInfo.dlType = query.getColumn(6).getText();
-                logInfo.srcIp = query.getColumn(7).getText();
-                logInfo.dstIp = query.getColumn(8).getText();
-                logInfo.nwType = query.getColumn(9).getText();
-                logInfo.srcPort = query.getColumn(10).getInt();
-                logInfo.dstPort = query.getColumn(11).getInt();
-                logInfo.tpType = query.getColumn(12).getText();
-                logInfo.layerNum = query.getColumn(13).getInt();
-                logInfo.appType = query.getColumn(14).getText();
-
-                logs.push_back(logInfo);
-            }
-            return logs;
-        }
+        std::vector<layerInfo_t> getLayers(uint64_t sec, uint64_t nsec);
 
         void clearLastTime(){
             this->lastSec = 0;
