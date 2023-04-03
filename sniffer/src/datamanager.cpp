@@ -38,7 +38,8 @@ DataManager::DataManager(std::string dev)
             "srcPort INTEGER,"
             "dstPort INTEGER,"
             "tpType TEXT,"
-            "layerNum INTEGER"
+            "layerNum INTEGER,"
+            "appType TEXT"
             ");");
     // 建表 layer
     newdb->exec("CREATE TABLE IF NOT EXISTS layer ("
@@ -80,11 +81,11 @@ DataManager::DataManager(std::string dev)
 }
 
 //  插入log
-void DataManager::insertLog(uint64_t sec, uint64_t nsec, std::string dev,std::string srcMac, std::string dstMac, std::string dlType, std::string srcIp, std::string dstIp, std::string nwType, uint16_t srcPort, uint16_t dstPort, std::string tpType, uint8_t layerNum)
+void DataManager::insertLog(uint64_t sec, uint64_t nsec, std::string dev,std::string srcMac, std::string dstMac, std::string dlType, std::string srcIp, std::string dstIp, std::string nwType, uint16_t srcPort, uint16_t dstPort, std::string tpType, uint8_t layerNum, std::string appType)
 {
     try{
         // 插入数据
-        SQLite::Statement query(*db, "INSERT INTO log (sec, nsec, dev, srcMac, dstMac, dlType, srcIp, dstIp, nwType, srcPort, dstPort, tpType, layerNum) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);");
+        SQLite::Statement query(*db, "INSERT INTO log (sec, nsec, dev, srcMac, dstMac, dlType, srcIp, dstIp, nwType, srcPort, dstPort, tpType, layerNum, appType) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
         query.bind(1, int64_t(sec));
         query.bind(2, int64_t(nsec));
         query.bind(3, dev);
@@ -98,6 +99,7 @@ void DataManager::insertLog(uint64_t sec, uint64_t nsec, std::string dev,std::st
         query.bind(11, dstPort);
         query.bind(12, tpType);
         query.bind(13, layerNum);
+        query.bind(14, appType);
         query.exec();
     }
     catch (std::exception& e){
@@ -142,6 +144,7 @@ void DataManager::consumePacket(pcpp::Packet &packet)
     uint16_t srcPort=0;
     uint16_t dstPort=0;
     std::string tpType="";
+    std::string appType="";
 
     std::string dev = this->getDev();
 
@@ -204,11 +207,17 @@ void DataManager::consumePacket(pcpp::Packet &packet)
         case pcpp::OsiModelPresentationLayer:
         case pcpp::OsiModelApplicationLayer:{
             ApplicationLayer appLayer = ApplicationLayer(curLayer, packet);
-            std::string appType = getApplicationLayerType(appLayer.getType());
+            std::string thisAppType = getApplicationLayerType(appLayer.getType());
             std::string layerType = "ApplicationLayer";
             uint16_t len = appLayer.getDataLen();
             uint8_t* data = appLayer.getData();
-            insertLayer(sec, nsec, dev, layerNum, "", "", layerType, appType, len, data);
+            insertLayer(sec, nsec, dev, layerNum, "", "", layerType, thisAppType, len, data);
+            if(appType == ""){
+                appType = thisAppType;
+            }
+            else{
+                appType = appType + " " + thisAppType;
+            }
             // appLayer.printLayer();
         }break;
         default:
@@ -218,7 +227,7 @@ void DataManager::consumePacket(pcpp::Packet &packet)
         layerNum++;
     }
 
-    insertLog(sec, nsec, dev, srcMac, dstMac, dlType, srcIp, dstIp, nwType, srcPort, dstPort, tpType, layerNum);
+    insertLog(sec, nsec, dev, srcMac, dstMac, dlType, srcIp, dstIp, nwType, srcPort, dstPort, tpType, layerNum, appType);
 
     transaction.commit();
 

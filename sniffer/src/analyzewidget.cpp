@@ -15,8 +15,8 @@ AnalyzeWidget::AnalyzeWidget(QWidget *parent) :
     ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableWidget->verticalHeader()->setVisible(false);
-    ui->tableWidget->setColumnCount(7);
-    ui->tableWidget->setHorizontalHeaderLabels(QStringList()<<"时间"<<"源"<<"源mac"<<"目的"<<"目的mac"<<"网络层协议"<<"传输层协议");
+    ui->tableWidget->setColumnCount(8);
+    ui->tableWidget->setHorizontalHeaderLabels(QStringList()<<"时间"<<"源"<<"源mac"<<"目的"<<"目的mac"<<"网络层协议"<<"传输层协议"<<"应用层协议");
     connect(ui->update,&QPushButton::clicked,[=](){
         if(ui->comboBox->currentIndex()==-1)
         {
@@ -59,6 +59,11 @@ AnalyzeWidget::AnalyzeWidget(QWidget *parent) :
                             ui->tableWidget->setItem(row,6,new QTableWidgetItem(QString::fromStdString("-----")));
                         else
                             ui->tableWidget->setItem(row,6,new QTableWidgetItem(QString::fromStdString(log.tpType)));
+
+                        if(log.appType=="")
+                            ui->tableWidget->setItem(row,7,new QTableWidgetItem(QString::fromStdString("-----")));
+                        else
+                            ui->tableWidget->setItem(row,7,new QTableWidgetItem(QString::fromStdString(log.appType)));
                     }
                     break;
                 }

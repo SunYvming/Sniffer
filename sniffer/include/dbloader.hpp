@@ -22,6 +22,7 @@ class DBLoader
             uint16_t dstPort;
             std::string tpType;
             uint8_t layerNum;
+            std::string appType;
 
         }logInfo_t;
 
@@ -57,6 +58,7 @@ class DBLoader
                 logInfo.dstPort = query.getColumn(11).getInt();
                 logInfo.tpType = query.getColumn(12).getText();
                 logInfo.layerNum = query.getColumn(13).getInt();
+                logInfo.appType = query.getColumn(14).getText();
 
                 logs.push_back(logInfo);
             }
@@ -87,6 +89,7 @@ class DBLoader
                 logInfo.dstPort = query.getColumn(11).getInt();
                 logInfo.tpType = query.getColumn(12).getText();
                 logInfo.layerNum = query.getColumn(13).getInt();
+                logInfo.appType = query.getColumn(14).getText();
 
                 logs.push_back(logInfo);
             }
