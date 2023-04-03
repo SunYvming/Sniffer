@@ -20,9 +20,12 @@ public:
 
     void addDBLoader(DBLoader* db);
 
+    void updateTable(std::string target);
+
 private:
     Ui::AnalyzeWidget *ui;
     std::vector<DBLoader*> dbs;
+    std::string lastText;
 };
 
 #endif // ANALYZEWIDGET_H

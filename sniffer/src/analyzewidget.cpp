@@ -6,6 +6,72 @@
 #include <iostream>
 #include <ctime>
 
+void AnalyzeWidget::updateTable(std::string target){
+    if(target != lastText){
+        ui->tableWidget->clearContents();
+        ui->tableWidget->setRowCount(0);
+        lastText = target;
+        for(auto db : dbs){
+            if(db->getDev()==target){
+                db->clearLastTime();
+                break;
+            }
+        }
+    }
+    for(auto db : dbs){
+        if(db->getDev()==target){
+            std::vector<DBLoader::logInfo_t> logs;
+            logs = db->getNewLogs();
+            for(auto log : logs){
+                int row = ui->tableWidget->rowCount();
+                ui->tableWidget->insertRow(row);
+
+                std::time_t timestamp = log.sec;
+                std::tm* t = std::localtime(&timestamp);
+                char formatted_time[255];
+                std::strftime(formatted_time, 255, "%Y-%m-%d %H:%M:%S", t);
+                ui->tableWidget->setItem(row,0,new QTableWidgetItem(QString::fromUtf8(formatted_time)));
+
+                if(log.srcIp=="")
+                    ui->tableWidget->setItem(row,1,new QTableWidgetItem(QString::fromStdString("-----")));
+                else
+                    ui->tableWidget->setItem(row,1,new QTableWidgetItem(QString::fromStdString(log.srcIp+":"+std::to_string(log.srcPort))));
+
+                if(log.srcMac=="")
+                    ui->tableWidget->setItem(row,2,new QTableWidgetItem(QString::fromStdString("-----")));
+                else
+                    ui->tableWidget->setItem(row,2,new QTableWidgetItem(QString::fromStdString(log.srcMac)));
+
+                if(log.dstIp=="")
+                    ui->tableWidget->setItem(row,3,new QTableWidgetItem(QString::fromStdString("-----")));
+                else
+                    ui->tableWidget->setItem(row,3,new QTableWidgetItem(QString::fromStdString(log.dstIp+":"+std::to_string(log.dstPort))));
+
+                if(log.dstMac=="")
+                    ui->tableWidget->setItem(row,4,new QTableWidgetItem(QString::fromStdString("-----")));
+                else
+                    ui->tableWidget->setItem(row,4,new QTableWidgetItem(QString::fromStdString(log.dstMac)));
+
+                if(log.nwType=="")
+                    ui->tableWidget->setItem(row,5,new QTableWidgetItem(QString::fromStdString("-----")));
+                else
+                    ui->tableWidget->setItem(row,5,new QTableWidgetItem(QString::fromStdString(log.nwType)));
+
+                if(log.tpType=="")
+                    ui->tableWidget->setItem(row,6,new QTableWidgetItem(QString::fromStdString("-----")));
+                else
+                    ui->tableWidget->setItem(row,6,new QTableWidgetItem(QString::fromStdString(log.tpType)));
+
+                if(log.appType=="")
+                    ui->tableWidget->setItem(row,7,new QTableWidgetItem(QString::fromStdString("-----")));
+                else
+                    ui->tableWidget->setItem(row,7,new QTableWidgetItem(QString::fromStdString(log.appType)));
+            }
+            break;
+        }
+    }
+}
+
 AnalyzeWidget::AnalyzeWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::AnalyzeWidget)
@@ -23,52 +89,17 @@ AnalyzeWidget::AnalyzeWidget(QWidget *parent) :
             ;// do nothing
         }
         else{
-            std::string target = ui->comboBox->currentText().toStdString();
-            for(auto db : dbs){
-                if(db->getDev()==target){
-                    std::vector<DBLoader::logInfo_t> logs;
-                    logs = db->getNewLogs();
-                    for(auto log : logs){
-                        int row = ui->tableWidget->rowCount();
-                        ui->tableWidget->insertRow(row);
-
-                        std::time_t timestamp = log.sec;
-                        std::tm* t = std::localtime(&timestamp);
-                        char formatted_time[255];
-                        std::strftime(formatted_time, 255, "%Y-%m-%d %H:%M:%S", t);
-                        ui->tableWidget->setItem(row,0,new QTableWidgetItem(QString::fromUtf8(formatted_time)));
-
-                        if(log.srcIp=="")
-                            ui->tableWidget->setItem(row,1,new QTableWidgetItem(QString::fromStdString("-----")));
-                        else
-                            ui->tableWidget->setItem(row,1,new QTableWidgetItem(QString::fromStdString(log.srcIp+":"+std::to_string(log.srcPort))));
-                        ui->tableWidget->setItem(row,2,new QTableWidgetItem(QString::fromStdString(log.srcMac)));
-
-                        if(log.dstIp=="")
-                            ui->tableWidget->setItem(row,3,new QTableWidgetItem(QString::fromStdString("-----")));
-                        else
-                            ui->tableWidget->setItem(row,3,new QTableWidgetItem(QString::fromStdString(log.dstIp+":"+std::to_string(log.dstPort))));
-                        ui->tableWidget->setItem(row,4,new QTableWidgetItem(QString::fromStdString(log.dstMac)));
-
-                        if(log.nwType=="")
-                            ui->tableWidget->setItem(row,5,new QTableWidgetItem(QString::fromStdString("-----")));
-                        else
-                            ui->tableWidget->setItem(row,5,new QTableWidgetItem(QString::fromStdString(log.nwType)));
-
-                        if(log.tpType=="")
-                            ui->tableWidget->setItem(row,6,new QTableWidgetItem(QString::fromStdString("-----")));
-                        else
-                            ui->tableWidget->setItem(row,6,new QTableWidgetItem(QString::fromStdString(log.tpType)));
-
-                        if(log.appType=="")
-                            ui->tableWidget->setItem(row,7,new QTableWidgetItem(QString::fromStdString("-----")));
-                        else
-                            ui->tableWidget->setItem(row,7,new QTableWidgetItem(QString::fromStdString(log.appType)));
-                    }
-                    break;
-                }
-            }
+            updateTable(ui->comboBox->currentText().toStdString());
         }
+    });
+    connect(ui->comboBox,&QComboBox::currentTextChanged,[=](QString text){
+        if(text==""){
+            ui->tableWidget->clearContents();
+            ui->tableWidget->setRowCount(0);
+            lastText = "";
+        }
+        else
+            updateTable(text.toStdString());
     });
 }
 
