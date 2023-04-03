@@ -20,6 +20,8 @@ LayerCard::LayerCard(DBLoader::layerInfo_t layer, QWidget *parent) :
     str = str.split("").join(" ");
     ui->row->setText(data.toHex(' ').toUpper());
     ui->decode->setText(str);
+
+    delete[] layer.data;
 }
 
 LayerCard::~LayerCard()
