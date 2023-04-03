@@ -135,6 +135,8 @@ class TransportLayer : public Layer
         TransportLayer(pcpp::Layer *layer , pcpp::Packet &packet) : Layer(layer){
             this->srcPort = 0;
             this->dstPort = 0;
+            this->ackNumber = 0;
+            this->sequenceNumber = 0;
             try
             {
                 this->parse(packet);
@@ -162,7 +164,28 @@ class TransportLayer : public Layer
             return this->dstPort;
         }
 
+        uint32_t getAckNumber(){
+            return this->ackNumber;
+        }
+
+        uint32_t getSequenceNumber(){
+            return this->sequenceNumber;
+        }
+
+        uint16_t getWindowSize(){
+            return this->windowSize;
+        }
+
+        std::string getTcpFlags(){
+            return this->tcpFlags;
+        }
+
+        int getTcpOptionsNum(){
+            return this->tcpOptions.size();
+        }
+
     private:
+        std::string getTcpFlags(pcpp::TcpLayer* tcpLayer);
         uint16_t srcPort;
         uint16_t dstPort;
         uint32_t sequenceNumber;

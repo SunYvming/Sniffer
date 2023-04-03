@@ -130,6 +130,27 @@ void DataManager::insertLayer(uint64_t sec, uint64_t nsec, std::string dev, uint
     }
 }
 
+void DataManager::insertTcp(uint64_t sec, uint64_t nsec, std::string dev, uint8_t layerNum, uint32_t seqNum, uint32_t ackNum, uint16_t windowSize, std::string flags, uint8_t optionNum)
+{
+    try{
+        // 插入数据
+        SQLite::Statement query(*db, "INSERT INTO tcp (sec, nsec, dev, layerNum, seqNum, ackNum, windowSize, flags, optionNum) VALUES (?,?,?,?,?,?,?,?,?);");
+        query.bind(1, int64_t(sec));
+        query.bind(2, int64_t(nsec));
+        query.bind(3, dev);
+        query.bind(4, layerNum);
+        query.bind(5, seqNum);
+        query.bind(6, ackNum);
+        query.bind(7, windowSize);
+        query.bind(8, flags);
+        query.bind(9, optionNum);
+        query.exec();
+    }
+    catch (std::exception& e){
+        std::cout << e.what() << std::endl;
+    }
+}
+
 void DataManager::consumePacket(pcpp::Packet &packet)
 {   
     long sec;
@@ -195,6 +216,9 @@ void DataManager::consumePacket(pcpp::Packet &packet)
             srcPort = tpLayer.getSrcPort();
             dstPort = tpLayer.getDstPort();
             tpType = getTransportLayerType(tpLayer.getType());
+            if(tpType == "TCP"){
+                insertTcp(sec, nsec, dev, layerNum, tpLayer.getSequenceNumber(), tpLayer.getAckNumber(), tpLayer.getWindowSize(), tpLayer.getTcpFlags(), tpLayer.getTcpOptionsNum());
+            }
             std::string layerType = "TransportLayer";
             uint16_t len = tpLayer.getDataLen();
             uint8_t* data = tpLayer.getData();

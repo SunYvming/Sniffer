@@ -90,3 +90,26 @@ std::vector<DBLoader::layerInfo_t> DBLoader::getLayers(uint64_t sec, uint64_t ns
     }
     return layers;
 }
+
+std::vector<DBLoader::tcpInfo_t> DBLoader::getTcp(uint64_t sec, uint64_t nsec){
+    std::vector<DBLoader::tcpInfo_t> tcps;
+    DBLoader::tcpInfo_t tcpInfo;
+    SQLite::Statement query(*db, "SELECT * FROM tcp WHERE sec = ? AND nsec = ?");
+    query.bind(1, (long)sec);
+    query.bind(2, (long)nsec);
+    while (query.executeStep())
+    {
+        tcpInfo.sec = query.getColumn(1).getInt64();
+        tcpInfo.nsec = query.getColumn(2).getInt64();
+        tcpInfo.dev = query.getColumn(3).getText();
+        tcpInfo.layerNum = query.getColumn(4).getInt();
+        tcpInfo.seq = query.getColumn(5).getInt64();
+        tcpInfo.ack = query.getColumn(6).getInt64();
+        tcpInfo.windowSize = query.getColumn(7).getInt();
+        tcpInfo.flags = query.getColumn(8).getText();
+        tcpInfo.optionNum = query.getColumn(9).getInt();
+
+        tcps.push_back(tcpInfo);
+    }
+    return tcps;
+}

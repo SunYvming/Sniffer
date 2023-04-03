@@ -206,7 +206,7 @@ void NetworkLayer::printLayer()
     std::cout << "================================" << std::endl;
 }
 
-std::string getTcpFlags(pcpp::TcpLayer* tcpLayer)
+std::string TransportLayer::getTcpFlags(pcpp::TcpLayer* tcpLayer)
 {
     std::string result = "";
     if (tcpLayer->getTcpHeader()->synFlag == 1)

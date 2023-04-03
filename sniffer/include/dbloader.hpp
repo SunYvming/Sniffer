@@ -39,6 +39,18 @@ class DBLoader
             uint8_t* data;
         }layerInfo_t;
 
+        typedef struct{
+            uint64_t sec;
+            uint64_t nsec;
+            std::string dev;
+            uint8_t layerNum;
+            uint32_t seq;
+            uint32_t ack;
+            uint16_t windowSize;
+            std::string flags;
+            uint8_t optionNum;
+        }tcpInfo_t;
+
         DBLoader(std::string dev);
         ~DBLoader(){
             delete db;
@@ -53,6 +65,8 @@ class DBLoader
         std::vector<logInfo_t> getNewLogs();
 
         std::vector<layerInfo_t> getLayers(uint64_t sec, uint64_t nsec);
+
+        std::vector<tcpInfo_t> getTcp(uint64_t sec, uint64_t nsec);
 
         void clearLastTime(){
             this->lastSec = 0;

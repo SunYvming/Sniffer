@@ -31,6 +31,10 @@ set(SOURCES src/main.cpp
             form/logframe.ui
             src/layercard.cpp
             form/layercard.ui
+            src/extrainfocard.cpp
+            form/tcpinfo.ui
+            form/httpinfo.ui
+            form/defaultinfo.ui
             include/datamanager.hpp
             include/dbloader.hpp
             include/layer.hpp
@@ -42,6 +46,7 @@ set(SOURCES src/main.cpp
             include/analyzewidget.h
             include/logframe.h
             include/layercard.h
+            include/extrainfocard.h
             )
 
 set(PcapPlusPlus_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/PcapPlusPlus/lib/cmake/pcapplusplus)

@@ -4,6 +4,7 @@
 #include <QScrollArea>
 #include "dbloader.hpp"
 #include "layercard.h"
+#include "extrainfocard.h"
 #include <vector>
 
 namespace Ui {
@@ -22,6 +23,7 @@ public:
 private:
     Ui::LogFrame *ui;
     std::vector<LayerCard*> cards;
+    std::vector<ExtraInfoCard*> extraCards;
     QWidget *widget;
 };
 
