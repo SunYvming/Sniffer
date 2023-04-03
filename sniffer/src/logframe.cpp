@@ -50,6 +50,13 @@ void LogFrame::updateLayer(uint64_t sec, uint64_t nsec, DBLoader *db)
                 extraCards.push_back(tcpCard);
                 layout->addWidget(tcpCard);
             }
+
+            std::vector<DBLoader::tcpOptionInfo_t> tcpOptionInfo = db->getTcpOption(sec,nsec);
+            for(auto info : tcpOptionInfo){
+                ExtraInfoCard* tcpOptionCard = new ExtraInfoCard(info);
+                extraCards.push_back(tcpOptionCard);
+                layout->addWidget(tcpOptionCard);
+            }
         }
     }
     this->widget->setMinimumHeight(1000);

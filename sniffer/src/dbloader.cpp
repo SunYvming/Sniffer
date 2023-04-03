@@ -113,3 +113,27 @@ std::vector<DBLoader::tcpInfo_t> DBLoader::getTcp(uint64_t sec, uint64_t nsec){
     }
     return tcps;
 }
+
+std::vector<DBLoader::tcpOptionInfo_t> DBLoader::getTcpOption(uint64_t sec, uint64_t nsec){
+    std::vector<DBLoader::tcpOptionInfo_t> tcpOptions;
+    DBLoader::tcpOptionInfo_t tcpOptionInfo;
+    SQLite::Statement query(*db, "SELECT * FROM tcpOption WHERE sec = ? AND nsec = ?");
+    query.bind(1, (long)sec);
+    query.bind(2, (long)nsec);
+    while (query.executeStep())
+    {
+        tcpOptionInfo.sec = query.getColumn(1).getInt64();
+        tcpOptionInfo.nsec = query.getColumn(2).getInt64();
+        tcpOptionInfo.dev = query.getColumn(3).getText();
+        tcpOptionInfo.layerNum = query.getColumn(4).getInt();
+        tcpOptionInfo.optionNum = query.getColumn(5).getInt();
+        tcpOptionInfo.optionType = query.getColumn(6).getText();
+        tcpOptionInfo.len = query.getColumn(7).getInt();
+        tcpOptionInfo.data = new uint8_t[tcpOptionInfo.len];
+
+        memcpy(tcpOptionInfo.data, query.getColumn(8).getBlob(), tcpOptionInfo.len);
+
+        tcpOptions.push_back(tcpOptionInfo);
+    }
+    return tcpOptions;
+}

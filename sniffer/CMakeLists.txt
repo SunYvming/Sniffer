@@ -33,6 +33,7 @@ set(SOURCES src/main.cpp
             form/layercard.ui
             src/extrainfocard.cpp
             form/tcpinfo.ui
+            form/tcpoption.ui
             form/httpinfo.ui
             form/defaultinfo.ui
             include/datamanager.hpp

@@ -10,6 +10,7 @@ namespace Ui {
 class TcpInfo;
 class HttpInfo;
 class DefaultInfo;
+class TcpOption;
 }
 
 class ExtraInfoCard : public QFrame
@@ -19,6 +20,7 @@ class ExtraInfoCard : public QFrame
 public:
     ExtraInfoCard(std::string type,QWidget *parent = nullptr);
     ExtraInfoCard(DBLoader::tcpInfo_t info,QWidget *parent = nullptr);
+    ExtraInfoCard(DBLoader::tcpOptionInfo_t info,QWidget *parent = nullptr);
 
     ~ExtraInfoCard();
 

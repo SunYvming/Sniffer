@@ -184,6 +184,13 @@ class TransportLayer : public Layer
             return this->tcpOptions.size();
         }
 
+        static std::string printTcpOptionType(pcpp::TcpOptionType optionType);
+        static std::string printTcpOptions(std::vector<pcpp::TcpOption*> tcpOptions);
+
+        std::vector<pcpp::TcpOption*> getTcpOptions(){
+            return this->tcpOptions;
+        }
+
     private:
         std::string getTcpFlags(pcpp::TcpLayer* tcpLayer);
         uint16_t srcPort;

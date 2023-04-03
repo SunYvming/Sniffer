@@ -14,6 +14,7 @@ class DataManager
         void insertLog(uint64_t sec, uint64_t nsec, std::string dev,std::string srcMac, std::string dstMac, std::string dlType, std::string srcIp, std::string dstIp, std::string nwType, uint16_t srcPort, uint16_t dstPort, std::string tpType, uint8_t layerNum, std::string appType);
         void insertLayer(uint64_t sec, uint64_t nsec, std::string dev, uint8_t layerNum, std::string src, std::string dst, std::string layerType, std::string type, uint16_t len, uint8_t* data);
         void insertTcp(uint64_t sec, uint64_t nsec, std::string dev, uint8_t layerNum, uint32_t seqNum, uint32_t ackNum, uint16_t windowSize, std::string flags, uint8_t optionNum);
+        void insertTcpOption(uint64_t sec, uint64_t nsec, std::string dev, uint8_t layerNum, uint8_t optionNum, std::string optionType, uint8_t len, uint8_t* data);
 
         std::string getDev(){
             return this->dev;

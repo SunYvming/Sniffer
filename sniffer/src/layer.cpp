@@ -273,7 +273,7 @@ void TransportLayer::parse(pcpp::Packet &packet)
     }
 }
 
-std::string printTcpOptionType(pcpp::TcpOptionType optionType)
+std::string TransportLayer::printTcpOptionType(pcpp::TcpOptionType optionType)
 {
     switch (optionType)
     {
@@ -330,11 +330,11 @@ std::string printTcpOptionType(pcpp::TcpOptionType optionType)
     }
 }
 
-std::string printTcpOptions(std::vector<pcpp::TcpOption*> tcpOptions){
+std::string TransportLayer::printTcpOptions(std::vector<pcpp::TcpOption*> tcpOptions){
     std::string res = "";
     std::for_each(tcpOptions.begin(), tcpOptions.end(), [&](pcpp::TcpOption* tcpOption){
         res += "[";
-        res += printTcpOptionType(tcpOption->getTcpOptionType());
+        res += TransportLayer::printTcpOptionType(tcpOption->getTcpOptionType());
         res += ":";
         uint8_t* value = tcpOption->getValue();
         if(tcpOption->getTcpOptionType() == pcpp::PCPP_TCPOPT_TIMESTAMP)
@@ -368,7 +368,7 @@ void TransportLayer::printLayer()
         std::cout << "Sequence Number: " << sequenceNumber << "Ack Number: "<< ackNumber <<std::endl;
         std::cout << "TCP Flags: " << tcpFlags <<std::endl;
         std::cout << "Window Size: " << windowSize <<std::endl;
-        std::cout << "TCP Options: " << printTcpOptions(this->tcpOptions) <<std::endl;
+        std::cout << "TCP Options: " << TransportLayer::printTcpOptions(this->tcpOptions) <<std::endl;
     }
     else if(getTransportLayerType(this->getType()) == "UDP")
         std::cout << "SRC Port: " << srcPort << "DST Port: "<< dstPort <<std::endl;

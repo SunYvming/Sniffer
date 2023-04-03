@@ -75,7 +75,9 @@ DataManager::DataManager(std::string dev)
             "nsec BIGINT,"
             "dev TEXT,"
             "layerNum INTEGER,"
+            "optionNum INTEGER,"
             "optionType TEXT,"
+            "len INTEGER,"
             "optionData BLOB"
             ");");
 }
@@ -151,6 +153,26 @@ void DataManager::insertTcp(uint64_t sec, uint64_t nsec, std::string dev, uint8_
     }
 }
 
+void DataManager::insertTcpOption(uint64_t sec, uint64_t nsec, std::string dev, uint8_t layerNum, uint8_t optionNum, std::string optionType, uint8_t len, uint8_t* optionData)
+{
+    try{
+        // 插入数据
+        SQLite::Statement query(*db, "INSERT INTO tcpOption (sec, nsec, dev, layerNum, optionNum, optionType, len, optionData) VALUES (?,?,?,?,?,?,?,?);");
+        query.bind(1, int64_t(sec));
+        query.bind(2, int64_t(nsec));
+        query.bind(3, dev);
+        query.bind(4, layerNum);
+        query.bind(5, optionNum);
+        query.bind(6, optionType);
+        query.bind(7, len);
+        query.bind(8, optionData, len);
+        query.exec();
+    }
+    catch (std::exception& e){
+        std::cout << e.what() << std::endl;
+    }
+}
+
 void DataManager::consumePacket(pcpp::Packet &packet)
 {   
     long sec;
@@ -218,6 +240,11 @@ void DataManager::consumePacket(pcpp::Packet &packet)
             tpType = getTransportLayerType(tpLayer.getType());
             if(tpType == "TCP"){
                 insertTcp(sec, nsec, dev, layerNum, tpLayer.getSequenceNumber(), tpLayer.getAckNumber(), tpLayer.getWindowSize(), tpLayer.getTcpFlags(), tpLayer.getTcpOptionsNum());
+                int optionNum = 0;
+                for(auto option : tpLayer.getTcpOptions()){
+                    insertTcpOption(sec, nsec, dev, layerNum, optionNum, TransportLayer::printTcpOptionType(option->getTcpOptionType()), option->getDataSize(), option->getValue());
+                    optionNum++;
+                }
             }
             std::string layerType = "TransportLayer";
             uint16_t len = tpLayer.getDataLen();
