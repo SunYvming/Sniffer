@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "sniffer.hpp"
+#include "dbloader.hpp"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -17,4 +18,9 @@ MainWindow::~MainWindow()
 
 void MainWindow::addInfoCard(Sniffer* dev){
     ui->info_tab->addInfoCard(dev);
+}
+
+void MainWindow::addDBLoader(Sniffer* dev){
+    DBLoader* db = new DBLoader(dev->getName());
+    ui->analy_tab->addDBLoader(db);
 }

@@ -17,6 +17,8 @@ public:
     ~MainWindow();
 
     void addInfoCard(Sniffer* dev);
+
+    void addDBLoader(Sniffer* dev);
     
 
 private:

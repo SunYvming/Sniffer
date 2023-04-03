@@ -21,6 +21,8 @@ DataManager::DataManager(std::string dev)
     SQLite::Database* newdb = new SQLite::Database(dev+".db", SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE | SQLite::OPEN_FULLMUTEX);
     // setDB(db);
     this->db = newdb;
+
+    newdb->exec("PRAGMA journal_mode=WAL;");
     // 建表 log
     newdb->exec("CREATE TABLE IF NOT EXISTS log ("
             "id INTEGER PRIMARY KEY AUTOINCREMENT,"

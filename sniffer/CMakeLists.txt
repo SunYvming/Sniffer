@@ -17,6 +17,7 @@ set(CMAKE_AUTOUIC_SEARCH_PATHS form)
 set(SOURCES src/main.cpp
             src/sniffer.cpp
             src/datamanager.cpp
+            src/dbloader.cpp
             src/layer.cpp
             src/mainwindow.cpp
             form/mainwindow.ui
@@ -31,6 +32,7 @@ set(SOURCES src/main.cpp
             src/layerframe.cpp
             form/layerframe.ui
             include/datamanager.hpp
+            include/dbloader.hpp
             include/layer.hpp
             include/sniffer.hpp
             include/exception.hpp

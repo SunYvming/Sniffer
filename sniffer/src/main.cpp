@@ -30,6 +30,7 @@ int main(int argc, char* argv[])
 			Sniffer* newSniffer = new Sniffer(dev);
 			sniffers.push_back(newSniffer);
 			w.addInfoCard(newSniffer);
+			w.addDBLoader(newSniffer);
 		}
 	});
 

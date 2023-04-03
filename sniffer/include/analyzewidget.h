@@ -3,6 +3,9 @@
 
 #include <QWidget>
 
+#include "dbloader.hpp"
+#include <vector>
+
 namespace Ui {
 class AnalyzeWidget;
 }
@@ -15,8 +18,11 @@ public:
     explicit AnalyzeWidget(QWidget *parent = nullptr);
     ~AnalyzeWidget();
 
+    void addDBLoader(DBLoader* db);
+
 private:
     Ui::AnalyzeWidget *ui;
+    std::vector<DBLoader*> dbs;
 };
 
 #endif // ANALYZEWIDGET_H
