@@ -65,5 +65,9 @@ int main(int argc, char* argv[])
 	// {
 	// 	delete sniffer;
 	// }});	
+
+	std::for_each(sniffers.begin(), sniffers.end(), [](Sniffer *sniffer) {
+		sniffer->stopCapture();
+	});
     return result;
 }

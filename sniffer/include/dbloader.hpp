@@ -63,9 +63,46 @@ class DBLoader
             return logs;
         }
 
+        std::vector<logInfo_t> getNewLogs(){
+            std::vector<logInfo_t> logs;
+            logInfo_t logInfo;
+            SQLite::Statement query(*db, "SELECT * FROM log WHERE sec > ? OR (sec = ? AND nsec > ?)");
+            query.bind(1, (long)this->lastSec);
+            query.bind(2, (long)this->lastSec);
+            query.bind(3, (long)this->lastNsec);
+            while (query.executeStep())
+            {
+                logInfo.sec = query.getColumn(1).getInt64();
+                this->lastSec = logInfo.sec;
+                logInfo.nsec = query.getColumn(2).getInt64();
+                this->lastNsec = logInfo.nsec;
+                logInfo.dev = query.getColumn(3).getText();
+                logInfo.srcMac = query.getColumn(4).getText();
+                logInfo.dstMac = query.getColumn(5).getText();
+                logInfo.dlType = query.getColumn(6).getText();
+                logInfo.srcIp = query.getColumn(7).getText();
+                logInfo.dstIp = query.getColumn(8).getText();
+                logInfo.nwType = query.getColumn(9).getText();
+                logInfo.srcPort = query.getColumn(10).getInt();
+                logInfo.dstPort = query.getColumn(11).getInt();
+                logInfo.tpType = query.getColumn(12).getText();
+                logInfo.layerNum = query.getColumn(13).getInt();
+
+                logs.push_back(logInfo);
+            }
+            return logs;
+        }
+
+        void clearLastTime(){
+            this->lastSec = 0;
+            this->lastNsec = 0;
+        }
+
     private:
         SQLite::Database* db;
         std::string dev;
+        uint64_t lastSec=0;
+        uint64_t lastNsec=0;
 };
 
 #endif
