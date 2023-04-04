@@ -46,6 +46,7 @@ set(SOURCES src/main.cpp
             include/infocard.h
             include/analyzewidget.h
             include/logframe.h
+            include/loginfoheaderview.hpp
             include/layercard.h
             include/extrainfocard.h
             )

@@ -224,7 +224,10 @@ void DataManager::consumePacket(pcpp::Packet &packet)
             NetworkLayer nwLayer = NetworkLayer(curLayer, packet);
             srcIp = nwLayer.getSrcIp();
             dstIp = nwLayer.getDstIp();
-            nwType = getNetworkLayerType(nwLayer.getType());
+            if(nwType == "")
+                nwType = getNetworkLayerType(nwLayer.getType());
+            else
+                nwType += " "+getNetworkLayerType(nwLayer.getType());
             std::string layerType = "NetworkLayer";
             uint16_t len = nwLayer.getDataLen();
             uint8_t* data = nwLayer.getData();

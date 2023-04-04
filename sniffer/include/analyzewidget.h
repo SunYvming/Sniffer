@@ -2,8 +2,10 @@
 #define ANALYZEWIDGET_H
 
 #include <QWidget>
+#include <QComboBox>
 
 #include "dbloader.hpp"
+#include "loginfoheaderview.hpp"
 #include <vector>
 
 namespace Ui {
@@ -26,6 +28,7 @@ private:
     Ui::AnalyzeWidget *ui;
     std::vector<DBLoader*> dbs;
     std::string lastText;
+    LogInfoHeaderView * headerView;
 };
 
 #endif // ANALYZEWIDGET_H

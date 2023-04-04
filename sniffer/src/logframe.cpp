@@ -25,6 +25,7 @@ LogFrame::~LogFrame()
 
 void LogFrame::updateLayer(uint64_t sec, uint64_t nsec, DBLoader *db)
 {
+    int count = 0;
     QVBoxLayout* layout = (QVBoxLayout*)this->widget->layout();
     for(auto layer : cards){
         layout->removeWidget(layer);
@@ -41,6 +42,7 @@ void LogFrame::updateLayer(uint64_t sec, uint64_t nsec, DBLoader *db)
     for(auto layer : res){
         LayerCard* card = new LayerCard(layer);
         cards.push_back(card);
+        count++;
         layout->addWidget(card);
         if(layer.type == "TCP"){
             std::vector<DBLoader::tcpInfo_t> tcpInfo = db->getTcp(sec,nsec);
@@ -49,15 +51,21 @@ void LogFrame::updateLayer(uint64_t sec, uint64_t nsec, DBLoader *db)
                 ExtraInfoCard* tcpCard = new ExtraInfoCard(info);
                 extraCards.push_back(tcpCard);
                 layout->addWidget(tcpCard);
+                count++;
             }
 
             std::vector<DBLoader::tcpOptionInfo_t> tcpOptionInfo = db->getTcpOption(sec,nsec);
+            bool extraInfo = false;
             for(auto info : tcpOptionInfo){
+                extraInfo = true;
                 ExtraInfoCard* tcpOptionCard = new ExtraInfoCard(info);
                 extraCards.push_back(tcpOptionCard);
                 layout->addWidget(tcpOptionCard);
             }
+            if(extraInfo){
+                count++;
+            }
         }
     }
-    this->widget->setMinimumHeight(1000);
+    this->widget->setMinimumHeight(count*300);
 }
