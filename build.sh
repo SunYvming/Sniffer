@@ -10,7 +10,7 @@ DESTDIR=../sniffer/third_party/PcapPlusPlus cmake --install build --prefix "/"
 cd -
 
 # 编译SQLiteCpp
-cd SQLitecpp
+cd SQLiteCpp
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DSQLITECPP_USE_ASAN=OFF -DSQLITECPP_USE_GCOV=OFF -DSQLITECPP_BUILD_EXAMPLES=ON -DSQLITECPP_BUILD_TESTS=ON ..
 cmake --build build
 # ctest --output-on-failure
