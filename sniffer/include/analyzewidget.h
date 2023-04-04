@@ -28,6 +28,8 @@ private:
     Ui::AnalyzeWidget *ui;
     std::vector<DBLoader*> dbs;
     std::string lastText;
+    std::string localIp;
+    bool localOnly;
     LogInfoHeaderView * headerView;
 };
 

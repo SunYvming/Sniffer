@@ -16,6 +16,7 @@ void AnalyzeWidget::updateTable(std::string target){
         lastText = target;
         for(auto db : dbs){
             if(db->getDev()==target){
+                this->localIp = db->getIp();
                 db->clearLastTime();
                 break;
             }
@@ -106,6 +107,11 @@ void AnalyzeWidget::updateTable(std::string target){
                     if(isOther == false || (targetTpType != "Other" && isOther == true))
                         ui->tableWidget->hideRow(row);
                 }
+
+                if(this->localOnly){
+                    if(log.srcIp != this->localIp && log.dstIp != this->localIp)
+                        ui->tableWidget->hideRow(row);
+                }
             }
             break;
         }
@@ -122,15 +128,36 @@ AnalyzeWidget::AnalyzeWidget(QWidget *parent) :
     ui->tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableWidget->verticalHeader()->setVisible(false);
     
-
-    // QComboBox* ntLayerfilter = new QComboBox(this);
-    
     this->headerView = new LogInfoHeaderView(1,Qt::Horizontal,ui->tableWidget);
     ui->tableWidget->setHorizontalHeader(this->headerView);
     ui->tableWidget->setColumnCount(10);
     ui->tableWidget->setHorizontalHeaderLabels(QStringList()<<"时间"<<"网络层协议"<<"传输层协议"<<"应用层协议"<<"源"<<"源mac"<<"目的"<<"目的mac");
     ui->tableWidget->setColumnHidden(8,true);
     ui->tableWidget->setColumnHidden(9,true);
+
+    this->localOnly = false;
+    connect(ui->switchLocal,&QPushButton::clicked,[=](){
+        if(localOnly){
+            localOnly = false;
+            ui->switchLocal->setText("仅本机");
+            QPalette pal = ui->switchLocal->palette();
+            pal.setColor(QPalette::Button, Qt::white);
+            ui->switchLocal->setAutoFillBackground(true);
+            ui->switchLocal->setPalette(pal);
+            ui->switchLocal->update();
+        }
+        else{
+            localOnly = true;
+            ui->switchLocal->setText("全局");
+            QPalette pal = ui->switchLocal->palette();
+            pal.setColor(QPalette::Button, Qt::green);
+            ui->switchLocal->setAutoFillBackground(true);
+            ui->switchLocal->setPalette(pal);
+            ui->switchLocal->update();
+        }
+        this->lastText = "";
+        updateTable(ui->comboBox->currentText().toStdString());
+    });
 
     connect(headerView->nwLayerfilter,&QComboBox::currentTextChanged,[=](QString text){
         this->lastText = "";

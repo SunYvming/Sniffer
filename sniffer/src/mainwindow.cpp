@@ -21,6 +21,6 @@ void MainWindow::addInfoCard(Sniffer* dev){
 }
 
 void MainWindow::addDBLoader(Sniffer* dev){
-    DBLoader* db = new DBLoader(dev->getName());
+    DBLoader* db = new DBLoader(dev->getName(), dev->getIp());
     ui->analy_tab->addDBLoader(db);
 }

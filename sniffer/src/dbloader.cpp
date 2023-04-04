@@ -2,8 +2,9 @@
 #include "SQLiteCpp/SQLiteCpp.h"
 #include "cstring"
 
-DBLoader::DBLoader(std::string dev){
+DBLoader::DBLoader(std::string dev, std::string ip){
     this->dev = dev;
+    this->localIp = ip;
     SQLite::Database* newdb = new SQLite::Database(dev+".db", SQLite::OPEN_READONLY | SQLite::OPEN_FULLMUTEX);
     this->db = newdb;
 }

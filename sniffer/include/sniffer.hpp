@@ -45,6 +45,14 @@ class Sniffer
             return this->name;
         }
 
+        std::string getMac(){
+            return this->mac.toString();
+        }
+
+        std::string getIp(){
+            return this->ip.toString();
+        }
+
         void startCapture(int timeout = 0);
         void stopCapture();
         void printLog();

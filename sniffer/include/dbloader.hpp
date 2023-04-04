@@ -64,7 +64,7 @@ class DBLoader
         }tcpOptionInfo_t;
         
 
-        DBLoader(std::string dev);
+        DBLoader(std::string dev, std::string localMac);
         ~DBLoader(){
             delete db;
         }
@@ -88,9 +88,14 @@ class DBLoader
             this->lastNsec = 0;
         }
 
+        std::string getIp(){
+            return localIp;
+        }
+
     private:
         SQLite::Database* db;
         std::string dev;
+        std::string localIp;
         uint64_t lastSec=0;
         uint64_t lastNsec=0;
 };
