@@ -3,16 +3,16 @@
 ## 安装依赖
 ```shell
 # ubuntu
-sudo apt install libpcap-dev
+sudo apt install libpcap-dev build-essential libgl1-mesa-dev qt6-base-dev
 # arch linux
-sudo pacman -S libpcap
+sudo pacman -S libpcap qt6-base
 ```
-## 如何编译
+## 编译
 ```shell
 cd Sniffer
 ./build.sh
 ```
-## 如何使用
+## 使用
 
 ```shell
 sudo ./Sniffer
